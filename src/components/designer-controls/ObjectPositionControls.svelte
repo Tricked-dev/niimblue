@@ -6,6 +6,8 @@
   import QRCode from "$/fabric-object/qrcode";
   import Barcode from "$/fabric-object/barcode";
 
+  let open = $state(false);
+
   interface Props {
     selectedObject: fabric.FabricObject;
   }
@@ -58,29 +60,33 @@
   });
 </script>
 
-<div class="dropdown">
+<svelte:window onclick={() => open = false} />
+
+<div class="relative" onclick={(e) => e.stopPropagation()}>
   <button
-    class="btn btn-sm btn-secondary dropdown-toggle"
+    class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors"
     type="button"
-    data-bs-toggle="dropdown"
+    onclick={() => open = !open}
     title={$tr("params.generic.position")}>
     <MdIcon icon="control_camera" />
   </button>
-  <div class="dropdown-menu arrangement p-2">
-    <div class="input-group flex-nowrap input-group-sm mb-2">
-      <span class="input-group-text">x</span>
-      <input class="form-control" type="number" bind:value={x} onchange={updateObject} />
+  {#if open}
+  <div class="absolute z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl top-full mt-1 p-2 flex flex-col gap-2">
+    <div class="flex items-stretch flex-nowrap mb-2">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">x</span>
+      <input class="w-full bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500" type="number" bind:value={x} onchange={updateObject} />
     </div>
-    <div class="input-group flex-nowrap input-group-sm mb-2">
-      <span class="input-group-text">y</span>
-      <input class="form-control" type="number" bind:value={y} onchange={updateObject} />
+    <div class="flex items-stretch flex-nowrap mb-2">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">y</span>
+      <input class="w-full bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500" type="number" bind:value={y} onchange={updateObject} />
     </div>
     {#if !(selectedObject instanceof fabric.FabricText || selectedObject instanceof fabric.FabricImage || selectedObject instanceof QRCode || selectedObject instanceof Barcode)}
-      <div class="input-group flex-nowrap input-group-sm mb-2">
-        <input class="form-control" type="number" min="1" bind:value={width} onchange={updateObject} />
-        <span class="input-group-text">x</span>
-        <input class="form-control" type="number" min="1" bind:value={height} onchange={updateObject} />
+      <div class="flex items-stretch flex-nowrap mb-2">
+        <input class="w-full bg-zinc-800 border border-zinc-700 rounded-l px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500" type="number" min="1" bind:value={width} onchange={updateObject} />
+        <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 border-l-0 text-zinc-500 text-[11px] shrink-0">x</span>
+        <input class="w-full bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500" type="number" min="1" bind:value={height} onchange={updateObject} />
       </div>
     {/if}
   </div>
+  {/if}
 </div>

@@ -39,6 +39,9 @@ export const userIcons = writablePersisted<UserIcon[]>("user_icons", z.array(Use
 export const userFonts = writablePersisted<UserFont[]>("user_fonts", z.array(UserFontSchema), []);
 export const loadedFonts = writable<FontFace[]>([]);
 
+/** Dots per mm for the current label — updated when user applies label settings */
+export const labelDpmm = writable<number>(8);
+
 export const connectionState = writable<ConnectionState>("disconnected");
 export const connectedPrinterName = writable<string>("");
 export const printerClient = writable<NiimbotAbstractClient>();

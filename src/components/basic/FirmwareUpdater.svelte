@@ -65,23 +65,31 @@
   };
 </script>
 
-<div class="firmware-updater">
-  Firmware flashing
-  <div class="input-group input-group-sm mt-1">
+<div class="flex flex-col gap-1">
+  <span class="text-xs text-zinc-400">Firmware flashing</span>
+  <div class="flex items-stretch mt-1">
     {#if fwProgress}
-      <span class="input-group-text">Uploading {fwProgress}</span>
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 rounded text-zinc-500 text-[11px]">Uploading {fwProgress}</span>
     {:else}
-      <span class="input-group-text">To</span>
-      <button class="btn btn-sm btn-secondary" title={fwName} onclick={browseFw} disabled={!!fwProgress}>
-        {fwName.length > 0 ? fwName.slice(0, 8) + "..." : "Browse..."}
-      </button>
-      <span class="input-group-text">ver.</span>
-      <input class="form-control" placeholder="x.x" type="text" size="6" bind:value={fwVersion} />
-
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 rounded-l text-zinc-500 text-[11px] shrink-0">To</span>
       <button
-        class="btn btn-sm btn-danger"
+        class="inline-flex items-center px-2 h-7 bg-zinc-800 hover:bg-zinc-700 border-y border-zinc-700 text-zinc-300 text-xs transition-colors truncate max-w-[80px]"
+        title={fwName}
+        onclick={browseFw}
+        disabled={!!fwProgress}
+      >{fwName.length > 0 ? fwName.slice(0, 8) + "..." : "Browse..."}</button>
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0">ver.</span>
+      <input
+        class="w-14 bg-zinc-800 border border-zinc-700 px-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+        placeholder="x.x"
+        type="text"
+        bind:value={fwVersion}
+      />
+      <button
+        class="inline-flex items-center px-2 h-7 rounded-r bg-red-700 hover:bg-red-600 text-white text-xs transition-colors disabled:opacity-40"
         onclick={upgradeFw}
-        disabled={!!fwProgress || !fwVersionValid || fwData === undefined}>Burn</button>
+        disabled={!!fwProgress || !fwVersionValid || fwData === undefined}
+      >Burn</button>
     {/if}
   </div>
 </div>

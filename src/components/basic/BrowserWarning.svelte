@@ -9,7 +9,7 @@
 </script>
 
 {#if !caps.webSerial && !caps.webBluetooth && !caps.capacitorBle}
-  <div class="alert alert-danger" role="alert">
+  <div class="bg-red-900/30 border border-red-700 rounded px-4 py-3 text-red-400 text-sm" role="alert">
     <div>
       {$tr("browser_warning.lines.first")}
       <MdIcon icon="sentiment_very_dissatisfied" />
@@ -21,10 +21,7 @@
 {/if}
 
 {#if antiFingerprinting}
-  <div class="alert alert-danger" role="alert">
+  <div class="bg-red-900/30 border border-red-700 rounded px-4 py-3 text-red-400 text-sm" role="alert">
     {$tr("browser_warning.fingerprinting")}
   </div>
 {/if}
-
-<style>
-</style>

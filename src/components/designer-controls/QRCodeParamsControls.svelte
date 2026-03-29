@@ -14,12 +14,12 @@
 
 <input type="hidden" value={editRevision}>
 
-<div class="input-group input-group-sm flex-nowrap">
-  <span class="input-group-text" title={$tr("params.qrcode.ecl")}>
+<div class="flex items-stretch flex-nowrap" style="width: fit-content">
+  <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.qrcode.ecl")}>
     <MdIcon icon="auto_fix_high" />
   </span>
   <select
-    class="form-select"
+    class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
     value={selectedQRCode.ecl}
     onchange={(e) => {
       selectedQRCode?.set("ecl", e.currentTarget.value);
@@ -32,12 +32,12 @@
   </select>
 </div>
 
-<div class="input-group input-group-sm flex-nowrap">
-  <span class="input-group-text" title={$tr("params.qrcode.mode")}>
+<div class="flex items-stretch flex-nowrap" style="width: fit-content">
+  <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.qrcode.mode")}>
     <MdIcon icon="abc" />
   </span>
   <select
-    class="form-select"
+    class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
     value={selectedQRCode.mode}
     onchange={(e) => {
       selectedQRCode?.set("mode", e.currentTarget.value);
@@ -50,12 +50,12 @@
   </select>
 </div>
 
-<div class="input-group input-group-sm flex-nowrap">
-  <span class="input-group-text" title={$tr("params.qrcode.version")}>
+<div class="flex items-stretch flex-nowrap" style="width: fit-content">
+  <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.qrcode.version")}>
     <MdIcon icon="123" />
   </span>
   <select
-    class="form-select"
+    class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
     value={selectedQRCode.qrVersion}
     onchange={(e) => {
       selectedQRCode?.set("qrVersion", parseInt(e.currentTarget.value));
@@ -69,19 +69,10 @@
 </div>
 
 <textarea
-  class="qrcode-content form-control"
+  class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+  style="height: 100px"
   value={selectedQRCode.text}
   oninput={(e) => {
     selectedQRCode?.set("text", e.currentTarget.value);
     valueUpdated();
   }}></textarea>
-
-<style>
-  .input-group {
-    width: fit-content;
-  }
-
-  .qrcode-content {
-    height: 100px;
-  }
-</style>

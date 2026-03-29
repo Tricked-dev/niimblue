@@ -50,7 +50,7 @@
   };
 </script>
 
-<button class="btn btn-sm" onclick={onImportClicked}>
+<button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={onImportClicked}>
   <MdIcon icon="picture_as_pdf" />
 
   {$tr("editor.import.zpl")}
@@ -58,6 +58,6 @@
   {#if importState === "processing"}
     <MdIcon icon="hourglass_top" />
   {:else if importState === "error"}
-    <MdIcon icon="warning" class="text-warning" />
+    <MdIcon icon="warning" class="text-yellow-400" />
   {/if}
 </button>

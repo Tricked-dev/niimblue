@@ -6,7 +6,6 @@
   import { ExportedLabelTemplateSchema, type ExportedLabelTemplate } from "$/types";
   import { LocalStoragePersistence } from "$/utils/persistence";
   import { Toasts } from "$/utils/toasts";
-  import Dropdown from "bootstrap/js/dist/dropdown";
   import { FileUtils } from "$/utils/file_utils";
   import * as fabric from "fabric";
   import { Utils } from "@mmote/niimbluelib";
@@ -20,7 +19,7 @@
 
   let { onRequestLabelTemplate, onLoadRequested, canvas, csvEnabled }: Props = $props();
 
-  let dropdownRef: HTMLDivElement;
+  let open = $state(false);
   let savedLabels = $state<ExportedLabelTemplate[]>([]);
   let selectedIndex = $state<number>(-1);
   let title = $state<string>("");
@@ -153,7 +152,7 @@
         title = label.title;
       }
 
-      new Dropdown(dropdownRef).hide();
+      open = false;
     } catch (e) {
       Toasts.zodErrors(e, "Canvas load error:");
     }
@@ -201,110 +200,114 @@
   });
 </script>
 
-<div class="dropdown">
-  <button class="btn btn-sm btn-secondary" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+<svelte:window onclick={() => { open = false; }} />
+
+<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+<div class="relative" onclick={(e) => e.stopPropagation()}>
+
+  <button
+    class="w-8 h-8 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+    onclick={() => (open = !open)}
+  >
     <MdIcon icon="sd_storage" />
   </button>
-  <div class="saved-labels dropdown-menu" bind:this={dropdownRef}>
-    <h6 class="dropdown-header text-wrap">
-      {$tr("params.saved_labels.menu_title")} - {usedSpace}
-      {$tr("params.saved_labels.kb_used")}
 
-      {#if csvEnabled}
-        <div class="pt-3 text-warning">
-            {$tr("params.saved_labels.save.withcsv")}
-        </div>
-      {/if}
-    </h6>
+  {#if open}
+    <div class="absolute left-full top-0 ml-1 w-[min(95vw,440px)] bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl z-50">
+      <div class="px-4 py-2 border-b border-zinc-800">
+        <p class="text-xs font-semibold text-zinc-300">
+          {$tr("params.saved_labels.menu_title")} — {usedSpace} {$tr("params.saved_labels.kb_used")}
+        </p>
+        {#if csvEnabled}
+          <p class="text-[10px] text-yellow-400 mt-1">{$tr("params.saved_labels.save.withcsv")}</p>
+        {/if}
+      </div>
 
-
-    <div class="px-3">
-      <div class="p-1">
-        <button class="btn btn-sm btn-outline-secondary" onclick={onImportClicked}>
-          <MdIcon icon="data_object" />
-          {$tr("params.saved_labels.load.json")}
-        </button>
-        <div class="btn-group btn-group-sm">
-          <button class="btn btn-outline-secondary" onclick={onExportClicked}>
+      <div class="p-3 flex flex-col gap-3">
+        <div class="flex gap-1 flex-wrap">
+          <button
+            class="inline-flex items-center gap-1 px-2 h-7 rounded border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors"
+            onclick={onImportClicked}
+          >
+            <MdIcon icon="data_object" />
+            {$tr("params.saved_labels.load.json")}
+          </button>
+          <button
+            class="inline-flex items-center gap-1 px-2 h-7 rounded border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors"
+            onclick={onExportClicked}
+          >
             <MdIcon icon="data_object" />
             {$tr("params.saved_labels.save.json")}
           </button>
           <button
-            type="button"
-            aria-label="dropdown"
-            class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split"
-            data-bs-toggle="dropdown">
-          </button>
-          <ul class="dropdown-menu">
-            <li>
-              <button class="dropdown-item" onclick={onExportPngClicked}>PNG</button>
-            </li>
-            {#if !isStandalone}
-              <li>
-                <button class="dropdown-item" onclick={onExportUrlClicked}
-                  >{$tr("params.saved_labels.save.url")}</button>
-              </li>
-            {/if}
-          </ul>
-        </div>
-      </div>
-
-      <SavedLabelsBrowser
-        class="mb-1"
-        {selectedIndex}
-        labels={savedLabels}
-        onItemClicked={onLabelSelected}
-        onItemDelete={onLabelDelete}
-        onItemExport={onLabelExport} />
-
-      <div class="input-group flex-nowrap input-group-sm mb-3">
-        <span class="input-group-text">{$tr("params.saved_labels.label_title")}</span>
-        <input
-          class="form-control"
-          type="text"
-          placeholder={$tr("params.saved_labels.label_title.placeholder")}
-          bind:value={title} />
-      </div>
-
-      <div class="d-flex gap-1 flex-wrap justify-content-end">
-        <div class="btn-group btn-group-sm make-default">
-          <button class="btn text-secondary" onclick={onMakeDefaultClicked}>
-            {$tr("params.saved_labels.make_default")}
-          </button>
-          {#if customDefaultTemplate}
-            <button class="btn text-secondary" onclick={onRemoveDefaultClicked}>
-              <MdIcon icon="close" />
-            </button>
+            class="inline-flex items-center gap-1 px-2 h-7 rounded border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors"
+            onclick={onExportPngClicked}
+          >PNG</button>
+          {#if !isStandalone}
+            <button
+              class="inline-flex items-center gap-1 px-2 h-7 rounded border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors"
+              onclick={onExportUrlClicked}
+            >{$tr("params.saved_labels.save.url")}</button>
           {/if}
         </div>
 
-        <button class="btn btn-sm btn-secondary" onclick={onSaveClicked}>
-          <MdIcon icon="save" />
-          {$tr("params.saved_labels.save.browser")}
-        </button>
+        <SavedLabelsBrowser
+          class="mb-1"
+          {selectedIndex}
+          labels={savedLabels}
+          onItemClicked={onLabelSelected}
+          onItemDelete={onLabelDelete}
+          onItemExport={onLabelExport} />
 
-        {#if selectedIndex !== -1}
-          <button class="btn btn-sm btn-secondary" onclick={onSaveReplaceClicked}>
-            <MdIcon icon="edit_note" />
-            {$tr("params.saved_labels.save.browser.replace")}
+        <div class="flex items-center gap-1">
+          <span class="text-[11px] text-zinc-500 shrink-0">{$tr("params.saved_labels.label_title")}</span>
+          <input
+            class="flex-1 h-7 px-2 bg-zinc-800 border border-zinc-700 rounded text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+            type="text"
+            placeholder={$tr("params.saved_labels.label_title.placeholder")}
+            bind:value={title} />
+        </div>
+
+        <div class="flex gap-1 flex-wrap items-center">
+          <div class="flex items-center gap-1 mr-auto">
+            <button
+              class="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors"
+              onclick={onMakeDefaultClicked}
+            >{$tr("params.saved_labels.make_default")}</button>
+            {#if customDefaultTemplate}
+              <button
+                class="w-5 h-5 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700 text-xs transition-colors"
+                onclick={onRemoveDefaultClicked}
+              ><MdIcon icon="close" /></button>
+            {/if}
+          </div>
+
+          <button
+            class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors"
+            onclick={onSaveClicked}
+          >
+            <MdIcon icon="save" />
+            {$tr("params.saved_labels.save.browser")}
           </button>
 
-          <button class="btn btn-sm btn-primary" onclick={onLoadClicked}>
-            <MdIcon icon="folder" />
-            {$tr("params.saved_labels.load.browser")}
-          </button>
-        {/if}
+          {#if selectedIndex !== -1}
+            <button
+              class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors"
+              onclick={onSaveReplaceClicked}
+            >
+              <MdIcon icon="edit_note" />
+              {$tr("params.saved_labels.save.browser.replace")}
+            </button>
+            <button
+              class="inline-flex items-center gap-1 px-2 h-7 rounded bg-blue-700 hover:bg-blue-600 text-white text-xs font-medium transition-colors"
+              onclick={onLoadClicked}
+            >
+              <MdIcon icon="folder" />
+              {$tr("params.saved_labels.load.browser")}
+            </button>
+          {/if}
+        </div>
       </div>
     </div>
-  </div>
+  {/if}
 </div>
-
-<style>
-  .saved-labels.dropdown-menu {
-    width: 100vw;
-    max-width: 450px;
-  }
-  .make-default {
-    margin-right: auto;
-  }
-</style>

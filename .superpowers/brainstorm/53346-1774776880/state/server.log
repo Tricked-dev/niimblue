@@ -1,0 +1,6 @@
+{"type":"server-started","port":63903,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:63903","screen_dir":"/home/tricked/dev/niimblue/.superpowers/brainstorm/53346-1774776880/content","state_dir":"/home/tricked/dev/niimblue/.superpowers/brainstorm/53346-1774776880/state"}
+{"type":"screen-added","file":"/home/tricked/dev/niimblue/.superpowers/brainstorm/53346-1774776880/content/layout.html"}
+{"type":"screen-added","file":"/home/tricked/dev/niimblue/.superpowers/brainstorm/53346-1774776880/content/mobile-layout.html"}
+{"type":"screen-added","file":"/home/tricked/dev/niimblue/.superpowers/brainstorm/53346-1774776880/content/waiting-1.html"}
+{"type":"screen-added","file":"/home/tricked/dev/niimblue/.superpowers/brainstorm/53346-1774776880/content/design-overview.html"}
+{"type":"server-stopped","reason":"idle timeout"}

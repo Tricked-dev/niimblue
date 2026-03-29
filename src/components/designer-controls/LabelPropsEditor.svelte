@@ -267,187 +267,169 @@
   });
 </script>
 
-<div class="dropdown">
-  <button class="btn btn-sm btn-secondary" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-    <MdIcon icon="settings" />
-  </button>
-  <div class="dropdown-menu">
-    <h6 class="dropdown-header">{$tr("params.label.menu_title")}</h6>
+<div class="px-3">
+  <div class="p-1 flex gap-1 mb-2">
+    <button class="inline-flex items-center gap-1 px-2 h-7 rounded border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors" onclick={onImportClicked}>
+      <MdIcon icon="data_object" />
+      {$tr("params.label.import")}
+    </button>
+    <button class="inline-flex items-center gap-1 px-2 h-7 rounded border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors" onclick={onExportClicked}>
+      <MdIcon icon="data_object" />
+      {$tr("params.label.export")}
+    </button>
+  </div>
+  <div class="mb-3 {error ? 'cursor-help text-yellow-400' : 'text-zinc-500'} text-xs" title={error}>
+    {$tr("params.label.current")}
+    {labelProps.size.width}x{labelProps.size.height}
+    {$tr("params.label.px")}
+    {#if labelProps.printDirection === "top"}
+      ({$tr("params.label.direction")} {$tr("params.label.direction.top")})
+    {:else if labelProps.printDirection === "left"}
+      ({$tr("params.label.direction")} {$tr("params.label.direction.left")})
+    {/if}
+    <button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={fillWithCurrentParams}><MdIcon icon="arrow_downward" /></button>
+  </div>
 
-    <div class="px-3">
-      <div class="p-1">
-        <button class="btn btn-sm btn-outline-secondary" onclick={onImportClicked}>
-          <MdIcon icon="data_object" />
-          {$tr("params.label.import")}
-        </button>
-        <button class="btn btn-sm btn-outline-secondary" onclick={onExportClicked}>
-          <MdIcon icon="data_object" />
-          {$tr("params.label.export")}
-        </button>
-      </div>
-      <div class="mb-3 {error ? 'cursor-help text-warning' : 'text-secondary'}" title={error}>
-        {$tr("params.label.current")}
-        {labelProps.size.width}x{labelProps.size.height}
-        {$tr("params.label.px")}
-        {#if labelProps.printDirection === "top"}
-          ({$tr("params.label.direction")} {$tr("params.label.direction.top")})
-        {:else if labelProps.printDirection === "left"}
-          ({$tr("params.label.direction")} {$tr("params.label.direction.left")})
-        {/if}
-        <button class="btn btn-sm" onclick={fillWithCurrentParams}><MdIcon icon="arrow_downward" /></button>
-      </div>
+  <LabelPresetsBrowser
+    class="mb-1"
+    presets={labelPresets}
+    onItemSelected={onLabelPresetSelected}
+    onItemDelete={onLabelPresetDelete} />
 
-      <LabelPresetsBrowser
-        class="mb-1"
-        presets={labelPresets}
-        onItemSelected={onLabelPresetSelected}
-        onItemDelete={onLabelPresetDelete} />
+  <div class="flex items-stretch flex-nowrap mb-2">
+    <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("params.label.size")}</span>
+    <input class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500" type="number" min="1" step={unit === "px" ? 8 : 1} bind:value={width} />
+    <button class="inline-flex items-center gap-1 px-2 h-7 bg-zinc-800 hover:bg-zinc-700 border border-l-0 border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={onFlip}><MdIcon icon="swap_horiz" /></button>
+    <input class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500" type="number" min="1" step={unit === "px" ? 8 : 1} bind:value={height} />
+    <select class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500" bind:value={unit} onchange={onUnitChange}>
+      <option value="mm"> {$tr("params.label.mm")}</option>
+      <option value="px"> {$tr("params.label.px")}</option>
+    </select>
+  </div>
 
-      <div class="input-group flex-nowrap input-group-sm mb-2">
-        <span class="input-group-text">{$tr("params.label.size")}</span>
-        <input class="form-control" type="number" min="1" step={unit === "px" ? 8 : 1} bind:value={width} />
-        <button class="btn btn-sm btn-secondary" onclick={onFlip}><MdIcon icon="swap_horiz" /></button>
-        <input class="form-control" type="number" min="1" step={unit === "px" ? 8 : 1} bind:value={height} />
-        <select class="form-select" bind:value={unit} onchange={onUnitChange}>
-          <option value="mm"> {$tr("params.label.mm")}</option>
-          <option value="px"> {$tr("params.label.px")}</option>
-        </select>
-      </div>
+  {#if unit !== "px"}
+    <DpiSelector bind:value={dpmm} />
+  {/if}
 
-      {#if unit !== "px"}
-        <DpiSelector bind:value={dpmm} />
-      {/if}
+  <div class="flex items-stretch flex-nowrap mb-2 print-dir-switch" role="group">
+    <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l w-full">{$tr("params.label.direction")}</span>
+    {#each printDirections as v (v)}
+      <input
+        type="radio"
+        class="sr-only"
+        name="print-dir"
+        id="print-dir-{v}"
+        autocomplete="off"
+        bind:group={printDirection}
+        value={v} />
+      <label class="inline-flex items-center gap-1 px-3 h-7 border border-l-0 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors cursor-pointer last:rounded-r {printDirection === v ? 'bg-zinc-700 text-zinc-200' : ''}" for="print-dir-{v}">
+        <div class="svg-icon"></div>
+      </label>
+    {/each}
+  </div>
 
-      <div class="input-group flex-nowrap input-group-sm print-dir-switch mb-2" role="group">
-        <span class="input-group-text w-100">{$tr("params.label.direction")}</span>
-        {#each printDirections as v (v)}
-          <input
-            type="radio"
-            class="btn-check"
-            name="print-dir"
-            id="print-dir-{v}"
-            autocomplete="off"
-            bind:group={printDirection}
-            value={v} />
-          <label class="btn btn-outline-secondary px-3" for="print-dir-{v}">
-            <div class="svg-icon"></div>
-          </label>
-        {/each}
-      </div>
+  <div class="flex items-stretch flex-nowrap mb-2 label-shape-switch" role="group">
+    <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l w-full">{$tr("params.label.shape")}</span>
+    {#each labelShapes as v (v)}
+      <input
+        type="radio"
+        class="sr-only"
+        name="label-shape"
+        id="label-shape-{v}"
+        autocomplete="off"
+        bind:group={shape}
+        value={v} />
+      <label class="inline-flex items-center gap-1 px-3 h-7 border border-l-0 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors cursor-pointer last:rounded-r {shape === v ? 'bg-zinc-700 text-zinc-200' : ''}" for="label-shape-{v}">
+        <div class="svg-icon"></div>
+      </label>
+    {/each}
+  </div>
 
-      <div class="input-group flex-nowrap input-group-sm label-shape-switch mb-2" role="group">
-        <span class="input-group-text w-100">{$tr("params.label.shape")}</span>
-        {#each labelShapes as v (v)}
-          <input
-            type="radio"
-            class="btn-check"
-            name="label-shape"
-            id="label-shape-{v}"
-            autocomplete="off"
-            bind:group={shape}
-            value={v} />
-          <label class="btn btn-outline-secondary px-3" for="label-shape-{v}">
-            <div class="svg-icon"></div>
-          </label>
-        {/each}
-      </div>
-
-      {#if shape !== "circle"}
-        <div class="input-group flex-nowrap input-group-sm label-split-switch mb-2" role="group">
-          <span class="input-group-text w-100">{$tr("params.label.split")}</span>
-          {#each labelSplits as v (v)}
-            <input
-              type="radio"
-              class="btn-check"
-              name="label-split"
-              id="label-split-{v}"
-              autocomplete="off"
-              bind:group={split}
-              value={v} />
-            <label class="btn btn-outline-secondary px-3" for="label-split-{v}">
-              <div class="svg-icon"></div>
-            </label>
-          {/each}
-        </div>
-
-        {#if split !== "none"}
-          <div class="input-group flex-nowrap input-group-sm mb-2">
-            <span class="input-group-text">{$tr("params.label.split.count")}</span>
-            <input class="form-control" type="number" min="1" bind:value={splitParts} />
-          </div>
-        {/if}
-      {/if}
-
-      {#if split !== "none"}
-        <div class="input-group flex-nowrap input-group-sm mirror-switch mb-2" role="group">
-          <span class="input-group-text w-100">{$tr("params.label.mirror")}</span>
-          {#each mirrorTypes as v (v)}
-            <input
-              type="radio"
-              class="btn-check"
-              name="mirror"
-              id="mirror-{v}"
-              autocomplete="off"
-              bind:group={mirror}
-              value={v} />
-            <label class="btn btn-outline-secondary px-3" for="mirror-{v}">
-              <div class="svg-icon"></div>
-            </label>
-          {/each}
-        </div>
-
-        <div class="input-group flex-nowrap input-group-sm tail-pos-switch mb-2" role="group">
-          <span class="input-group-text w-100">{$tr("params.label.tail.position")}</span>
-          {#each tailPositions as v (v)}
-            <input
-              type="radio"
-              class="btn-check"
-              name="tail-pos"
-              id="tail-{v}"
-              autocomplete="off"
-              bind:group={tailPos}
-              value={v} />
-            <label class="btn btn-outline-secondary px-3" for="tail-{v}">
-              <div class="svg-icon"></div>
-            </label>
-          {/each}
-        </div>
-
-        <div class="input-group flex-nowrap input-group-sm mb-2">
-          <span class="input-group-text">{$tr("params.label.tail.length")}</span>
-          <input class="form-control" type="number" min="1" bind:value={tailLength} />
-          <span class="input-group-text">
-            {#if unit === "mm"}{$tr("params.label.mm")}{/if}
-            {#if unit === "px"}{$tr("params.label.px")}{/if}
-          </span>
-        </div>
-      {/if}
-
-      <div class="input-group flex-nowrap input-group-sm mb-2">
-        <span class="input-group-text">{$tr("params.label.label_title")}</span>
-        <input class="form-control" type="text" bind:value={title} />
-      </div>
-
-      <div class="text-end">
-        <button class="btn btn-sm btn-secondary" onclick={onLabelPresetAdd}>
-          {$tr("params.label.save_template")}
-        </button>
-        <button class="btn btn-sm btn-primary" onclick={onApply}>{$tr("params.label.apply")}</button>
-      </div>
+  {#if shape !== "circle"}
+    <div class="flex items-stretch flex-nowrap mb-2 label-split-switch" role="group">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l w-full">{$tr("params.label.split")}</span>
+      {#each labelSplits as v (v)}
+        <input
+          type="radio"
+          class="sr-only"
+          name="label-split"
+          id="label-split-{v}"
+          autocomplete="off"
+          bind:group={split}
+          value={v} />
+        <label class="inline-flex items-center gap-1 px-3 h-7 border border-l-0 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors cursor-pointer last:rounded-r {split === v ? 'bg-zinc-700 text-zinc-200' : ''}" for="label-split-{v}">
+          <div class="svg-icon"></div>
+        </label>
+      {/each}
     </div>
+
+    {#if split !== "none"}
+      <div class="flex items-stretch flex-nowrap mb-2">
+        <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("params.label.split.count")}</span>
+        <input class="w-full bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500" type="number" min="1" bind:value={splitParts} />
+      </div>
+    {/if}
+  {/if}
+
+  {#if split !== "none"}
+    <div class="flex items-stretch flex-nowrap mb-2 mirror-switch" role="group">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l w-full">{$tr("params.label.mirror")}</span>
+      {#each mirrorTypes as v (v)}
+        <input
+          type="radio"
+          class="sr-only"
+          name="mirror"
+          id="mirror-{v}"
+          autocomplete="off"
+          bind:group={mirror}
+          value={v} />
+        <label class="inline-flex items-center gap-1 px-3 h-7 border border-l-0 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors cursor-pointer last:rounded-r {mirror === v ? 'bg-zinc-700 text-zinc-200' : ''}" for="mirror-{v}">
+          <div class="svg-icon"></div>
+        </label>
+      {/each}
+    </div>
+
+    <div class="flex items-stretch flex-nowrap mb-2 tail-pos-switch" role="group">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l w-full">{$tr("params.label.tail.position")}</span>
+      {#each tailPositions as v (v)}
+        <input
+          type="radio"
+          class="sr-only"
+          name="tail-pos"
+          id="tail-{v}"
+          autocomplete="off"
+          bind:group={tailPos}
+          value={v} />
+        <label class="inline-flex items-center gap-1 px-3 h-7 border border-l-0 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors cursor-pointer last:rounded-r {tailPos === v ? 'bg-zinc-700 text-zinc-200' : ''}" for="tail-{v}">
+          <div class="svg-icon"></div>
+        </label>
+      {/each}
+    </div>
+
+    <div class="flex items-stretch flex-nowrap mb-2">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("params.label.tail.length")}</span>
+      <input class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500" type="number" min="1" bind:value={tailLength} />
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 border-l-0 text-zinc-500 text-[11px] shrink-0 rounded-r">
+        {#if unit === "mm"}{$tr("params.label.mm")}{/if}
+        {#if unit === "px"}{$tr("params.label.px")}{/if}
+      </span>
+    </div>
+  {/if}
+
+  <div class="flex items-stretch flex-nowrap mb-2">
+    <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("params.label.label_title")}</span>
+    <input class="w-full bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500" type="text" bind:value={title} />
+  </div>
+
+  <div class="text-right">
+    <button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={onLabelPresetAdd}>
+      {$tr("params.label.save_template")}
+    </button>
+    <button class="inline-flex items-center gap-1 px-2.5 h-7 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors" onclick={onApply}>{$tr("params.label.apply")}</button>
   </div>
 </div>
 
 <style>
-  .dropdown-menu {
-    width: 100vw;
-    max-width: 450px;
-  }
-
-  .cursor-help {
-    cursor: help;
-  }
-
   .svg-icon {
     height: 1.5em;
     width: 1.5em;
@@ -456,9 +438,6 @@
 
   .tail-pos-switch .svg-icon {
     background-image: url("../assets/tail-pos.svg");
-  }
-  .tail-pos-switch label[for="tail-bottom"] .svg-icon {
-    transform: rotate(90deg);
   }
   .tail-pos-switch label[for="tail-bottom"] .svg-icon {
     transform: rotate(90deg);

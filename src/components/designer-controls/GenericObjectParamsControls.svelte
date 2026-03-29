@@ -5,6 +5,8 @@
   import MdIcon from "$/components/basic/MdIcon.svelte";
   import ObjectPositionControls from "$/components/designer-controls/ObjectPositionControls.svelte";
 
+  let open = $state(false);
+  let fitOpen = $state(false);
 
   interface Props {
     selectedObject: fabric.FabricObject;
@@ -67,57 +69,59 @@
   };
 </script>
 
+<svelte:window onclick={() => { open = false; fitOpen = false; }} />
+
 <input type="hidden" value={editRevision}>
 
-<button class="btn btn-sm btn-secondary" onclick={putToCenterV} title={$tr("params.generic.center.vertical")}>
+<button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={putToCenterV} title={$tr("params.generic.center.vertical")}>
   <MdIcon icon="vertical_distribute" />
 </button>
-<button class="btn btn-sm btn-secondary" onclick={putToCenterH} title={$tr("params.generic.center.horizontal")}>
+<button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={putToCenterH} title={$tr("params.generic.center.horizontal")}>
   <MdIcon icon="horizontal_distribute" />
 </button>
 
 <ObjectPositionControls {selectedObject} />
 
-<div class="dropdown">
+<div class="relative" onclick={(e) => e.stopPropagation()}>
   <button
-    class="btn btn-sm btn-secondary dropdown-toggle"
+    class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors"
     type="button"
-    data-bs-toggle="dropdown"
+    onclick={() => open = !open}
     title={$tr("params.generic.arrange")}>
     <MdIcon icon="segment" />
   </button>
-  <div class="dropdown-menu arrangement p-2">
-    <button class="btn btn-sm" onclick={() => bringTo("top")}>
+  {#if open}
+  <div class="absolute z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl top-full mt-1 min-w-[200px] p-2 text-center">
+    <button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={() => bringTo("top")}>
       {$tr("params.generic.arrange.top")}
     </button>
-    <button class="btn btn-sm" onclick={() => bringTo("bottom")}>
+    <button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={() => bringTo("bottom")}>
       {$tr("params.generic.arrange.bottom")}
     </button>
   </div>
+  {/if}
 </div>
 
 {#if selectedObject instanceof fabric.FabricImage}
-  <div class="btn-group btn-group-sm">
-    <button type="button" class="btn btn-secondary" onclick={fit} title={$tr("params.generic.fit")}>
+  <div class="flex items-stretch" onclick={(e) => e.stopPropagation()}>
+    <button type="button" class="inline-flex items-center gap-1 px-2 h-7 rounded-l bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={fit} title={$tr("params.generic.fit")}>
       <MdIcon icon="fit_screen" />
     </button>
-    <button
-      aria-label="Toggle"
-      type="button"
-      class="btn btn-secondary dropdown-toggle dropdown-toggle-split px-1"
-      data-bs-toggle="dropdown"></button>
-    <div class="dropdown-menu p-1">
-      <select class="form-select form-select-sm" value={$appConfig.fitMode ?? "stretch"} onchange={fitModeChanged}>
-        <option value="stretch">{$tr("params.generic.fit.mode.stretch")}</option>
-        <option value="ratio_min">{$tr("params.generic.fit.mode.ratio_min")}</option>
-        <option value="ratio_max">{$tr("params.generic.fit.mode.ratio_max")}</option>
-      </select>
+    <div class="relative">
+      <button
+        aria-label="Toggle"
+        type="button"
+        class="inline-flex items-center px-1 h-7 rounded-r bg-zinc-800 hover:bg-zinc-700 border border-l-0 border-zinc-700 text-zinc-300 text-xs transition-colors"
+        onclick={() => fitOpen = !fitOpen}></button>
+      {#if fitOpen}
+      <div class="absolute z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl top-full mt-1 p-1">
+        <select class="bg-zinc-800 border border-zinc-700 rounded px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500" value={$appConfig.fitMode ?? "stretch"} onchange={fitModeChanged}>
+          <option value="stretch">{$tr("params.generic.fit.mode.stretch")}</option>
+          <option value="ratio_min">{$tr("params.generic.fit.mode.ratio_min")}</option>
+          <option value="ratio_max">{$tr("params.generic.fit.mode.ratio_max")}</option>
+        </select>
+      </div>
+      {/if}
     </div>
   </div>
 {/if}
-
-<style>
-  .dropdown-menu.arrangement {
-    text-align: center;
-  }
-</style>

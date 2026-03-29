@@ -22,12 +22,12 @@
 
 <input type="hidden" value={editRevision}>
 
-<div class="input-group input-group-sm flex-nowrap">
-  <span class="input-group-text" title={$tr("params.aruco.dict")}>
+<div class="flex items-stretch flex-nowrap" style="width: fit-content">
+  <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.aruco.dict")}>
     <MdIcon icon="grid_on" />
   </span>
   <select
-    class="form-select"
+    class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
     value={selectedArUco.dictionary}
     onchange={(e) => {
       selectedArUco?.set("dictionary", e.currentTarget.value);
@@ -43,13 +43,13 @@
   </select>
 </div>
 
-<div class="input-group input-group-sm flex-nowrap">
-  <span class="input-group-text" title={$tr("params.aruco.marker_id")}>
+<div class="flex items-stretch flex-nowrap" style="width: fit-content">
+  <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.aruco.marker_id")}>
     <MdIcon icon="tag" />
   </span>
   <input
     type="number"
-    class="form-control"
+    class="w-full bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
     min="0"
     max={maxId}
     value={selectedArUco.markerId}
@@ -61,9 +61,3 @@
       }
     }} />
 </div>
-
-<style>
-  .input-group {
-    width: fit-content;
-  }
-</style>

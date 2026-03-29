@@ -335,7 +335,7 @@
         }
 
         let times = 1;
-        
+
         if ("$times" in row && row["$times"] !== "") {
           try {
             times = parseInt(row["$times"]);
@@ -373,9 +373,9 @@
 </script>
 
 <AppModal title={$tr("preview.title")} onClose={onModalClose} bind:show bind:this={modalRef}>
-  <div class="d-flex justify-content-center">
+  <div class="flex justify-center">
     {#if pagesTotal > 1}
-      <button disabled={printState !== "idle"} class="btn w-100 fs-1" onclick={pageDown}>
+      <button disabled={printState !== "idle"} class="inline-flex items-center justify-center w-full text-4xl text-zinc-400 hover:text-zinc-200" onclick={pageDown}>
         <MdIcon icon="chevron_left" />
       </button>
     {/if}
@@ -383,13 +383,13 @@
     <canvas class="print-start-{labelProps.printDirection}" bind:this={previewCanvas}></canvas>
 
     {#if pagesTotal > 1}
-      <button disabled={printState !== "idle"} class="btn w-100 fs-1" onclick={pageUp}>
+      <button disabled={printState !== "idle"} class="inline-flex items-center justify-center w-full text-4xl text-zinc-400 hover:text-zinc-200" onclick={pageUp}>
         <MdIcon icon="chevron_right" />
       </button>
     {/if}
   </div>
 
-  <div class="text-center">
+  <div class="text-center text-xs text-zinc-300">
     {#if pagesTotal > 1}<div>Page {page + 1} / {pagesTotal}</div>{/if}
 
     {#if printState === "sending"}
@@ -398,23 +398,23 @@
     {#if printState === "printing"}
       <div>
         Printing...
-        <div class="progress" role="progressbar">
-          <div class="progress-bar" style="width: {printProgress}%">{printProgress}%</div>
+        <div class="w-full bg-zinc-700 rounded-full h-4 mt-1 overflow-hidden" role="progressbar">
+          <div class="bg-blue-600 h-full text-center text-[10px] leading-4 text-white transition-none" style="width: {printProgress}%">{printProgress}%</div>
         </div>
       </div>
     {/if}
 
     {#if error}
-      <div class="alert alert-danger" role="alert">{error}</div>
+      <div class="bg-red-900/30 border border-red-700 rounded px-4 py-3 text-red-400 mt-2" role="alert">{error}</div>
     {/if}
   </div>
 
   {#snippet footer()}
-    <div class="input-group input-group-sm">
-      <span class="input-group-text">{$tr("preview.postprocess")}</span>
+    <div class="flex items-stretch">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.postprocess")}</span>
 
       <select
-        class="form-select"
+        class="bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1"
         bind:value={postProcessType}
         onchange={() => updateSavedProp("postProcess", postProcessType, true)}>
         <option value="threshold">{$tr("preview.postprocess.threshold")}</option>
@@ -429,7 +429,7 @@
         onClick={toggleSavedProp} />
 
       <button
-        class="btn btn-sm {postProcessInvert ? 'btn-secondary' : 'btn-outline-secondary'}"
+        class="inline-flex items-center gap-1 px-2 h-7 border border-l-0 border-zinc-700 text-xs transition-colors {postProcessInvert ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300' : 'text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
         onclick={() => {
           postProcessInvert = !postProcessInvert;
           updatePreview();
@@ -438,18 +438,18 @@
       </button>
     </div>
 
-    <div class="input-group input-group-sm">
-      <span class="input-group-text">{$tr("preview.threshold")}</span>
+    <div class="flex items-stretch">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.threshold")}</span>
 
       <input
         type="range"
         id="threshold"
-        class="form-range"
+        class="flex-1 h-7 px-4"
         min="1"
         max="255"
         bind:value={thresholdValue}
         onchange={() => updateSavedProp("threshold", thresholdValue, true)} />
-      <span class="input-group-text">{thresholdValue}</span>
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 border-l-0 text-zinc-500 text-[11px] shrink-0">{thresholdValue}</span>
 
       <ParamLockButton
         propName="threshold"
@@ -458,10 +458,10 @@
         onClick={toggleSavedProp} />
     </div>
 
-    <div class="input-group flex-nowrap input-group-sm">
-      <span class="input-group-text">{$tr("preview.copies")}</span>
+    <div class="flex items-stretch flex-nowrap">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.copies")}</span>
       <input
-        class="form-control"
+        class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
         type="number"
         min="1"
         bind:value={quantity}
@@ -473,10 +473,10 @@
         onClick={toggleSavedProp} />
     </div>
 
-    <div class="input-group flex-nowrap input-group-sm">
-      <span class="input-group-text">{$tr("preview.density")}</span>
+    <div class="flex items-stretch flex-nowrap">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.density")}</span>
       <input
-        class="form-control"
+        class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
         type="number"
         min={$printerMeta?.densityMin ?? 1}
         max={$printerMeta?.densityMax ?? 20}
@@ -486,9 +486,9 @@
     </div>
 
     {#if printTaskName === "D110M_V4"}
-      <div class="input-group flex-nowrap input-group-sm">
-        <span class="input-group-text">{$tr("preview.speed")}</span>
-        <select class="form-select" bind:value={speed} onchange={() => updateSavedProp("speed", speed, true)}>
+      <div class="flex items-stretch flex-nowrap">
+        <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.speed")}</span>
+        <select class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1" bind:value={speed} onchange={() => updateSavedProp("speed", speed, true)}>
           <option value={0}>{$tr("preview.speed.0")}</option>
           <option value={1}>{$tr("preview.speed.1")}</option>
         </select>
@@ -497,9 +497,9 @@
       </div>
     {/if}
 
-    <div class="input-group input-group-sm">
-      <span class="input-group-text">{$tr("preview.label_type")}</span>
-      <select class="form-select" bind:value={labelType} onchange={() => updateSavedProp("labelType", labelType)}>
+    <div class="flex items-stretch">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.label_type")}</span>
+      <select class="bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1" bind:value={labelType} onchange={() => updateSavedProp("labelType", labelType)}>
         {#each Object.values(LabelType) as lt (lt)}
           {#if typeof lt !== "string"}
             <option value={lt}>
@@ -517,10 +517,10 @@
         onClick={toggleSavedProp} />
     </div>
 
-    <div class="input-group input-group-sm">
-      <span class="input-group-text">{$tr("preview.print_task")}</span>
+    <div class="flex items-stretch">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.print_task")}</span>
       <select
-        class="form-select"
+        class="bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1"
         bind:value={printTaskName}
         onchange={() => updateSavedProp("printTaskName", printTaskName)}>
         {#each printTaskNames as name (name)}
@@ -538,25 +538,25 @@
         onClick={toggleSavedProp} />
     </div>
 
-    <div class="input-group input-group-sm">
-      <span class="input-group-text">{$tr("preview.offset")}</span>
+    <div class="flex items-stretch">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.offset")}</span>
       {#if offsetWarning}
-        <span class="input-group-text text-warning" title={offsetWarning}><MdIcon icon="warning" /></span>
+        <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 border-l-0 text-yellow-400 text-[11px] shrink-0" title={offsetWarning}><MdIcon icon="warning" /></span>
       {/if}
-      <span class="input-group-text"><MdIcon icon="unfold_more" class="r-90" /></span>
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 border-l-0 text-zinc-500 text-[11px] shrink-0"><MdIcon icon="unfold_more" class="r-90" /></span>
       <input
-        class="form-control"
+        class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
         type="number"
         bind:value={offset.x}
         onchange={() => updateSavedProp("offset", offset, true)} />
-      <span class="input-group-text"><MdIcon icon="unfold_more" /></span>
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 border-l-0 text-zinc-500 text-[11px] shrink-0"><MdIcon icon="unfold_more" /></span>
       <input
-        class="form-control"
+        class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
         type="number"
         bind:value={offset.y}
         onchange={() => updateSavedProp("offset", offset, true)} />
       <select
-        class="form-select"
+        class="bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
         bind:value={offset.offsetType}
         onchange={() => updateSavedProp("offset", offset, true)}>
         <option value="inner">{$tr("preview.offset.inner")}</option>
@@ -566,23 +566,23 @@
       <ParamLockButton propName="offset" value={offset} savedValue={savedProps.offset} onClick={toggleSavedProp} />
     </div>
 
-    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{$tr("preview.close")}</button>
+    <button type="button" class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors">{$tr("preview.close")}</button>
 
     {#if printState !== "idle"}
-      <button type="button" class="btn btn-primary" disabled={$disconnected} onclick={endPrint}>
+      <button type="button" class="inline-flex items-center gap-1 px-2.5 h-7 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors" disabled={$disconnected} onclick={endPrint}>
         {$tr("preview.print.cancel")}
       </button>
     {/if}
 
     <button
       type="button"
-      class="btn btn-secondary"
+      class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors"
       title={$tr("preview.print.system")}
       onclick={onPrintOnSystemPrinter}>
       <MdIcon icon="print" />
     </button>
 
-    <button type="button" class="btn btn-primary" disabled={$disconnected || printState !== "idle"} onclick={onPrint}>
+    <button type="button" class="inline-flex items-center gap-1 px-2.5 h-7 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors" disabled={$disconnected || printState !== "idle"} onclick={onPrint}>
       {#if $disconnected}
         {$tr("preview.not_connected")}
       {:else}
@@ -603,14 +603,5 @@
   }
   canvas.print-start-top {
     border-top: 2px solid #ff4646;
-  }
-  .progress-bar {
-    transition: none;
-  }
-  .input-group .form-range {
-    flex-grow: 1;
-    width: 1%;
-    height: unset;
-    padding: 0 1rem;
   }
 </style>

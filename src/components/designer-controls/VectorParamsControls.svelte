@@ -34,41 +34,41 @@
 <input type="hidden" value={editRevision}>
 
 {#if selectedObject instanceof fabric.Rect}
-  <div class="input-group flex-nowrap input-group-sm">
-    <span class="input-group-text" title={$tr("params.vector.round_radius")}>
+  <div class="flex items-stretch flex-nowrap" style="width: 7em">
+    <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.vector.round_radius")}>
       <MdIcon icon="rounded_corner" />
     </span>
     <input
       type="number"
       min="0"
       max={Math.min(selectedObject.width, selectedObject.height) / 2}
-      class="form-control"
+      class="w-full bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
       value={selectedObject.rx}
       oninput={(e) => roundRadiusChanged(e.currentTarget.valueAsNumber)} />
   </div>
 {/if}
 
 {#if selectedObject instanceof fabric.Rect || selectedObject instanceof fabric.Circle || selectedObject instanceof fabric.Line || selectedObject instanceof fabric.Polyline}
-  <div class="input-group flex-nowrap input-group-sm">
-    <span class="input-group-text" title={$tr("params.vector.stroke_width")}>
+  <div class="flex items-stretch flex-nowrap" style="width: 7em">
+    <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.vector.stroke_width")}>
       <MdIcon icon="line_weight" />
     </span>
     <input
       type="number"
       min="1"
-      class="form-control"
+      class="w-full bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
       value={selectedObject.strokeWidth}
       oninput={(e) => strokeWidthChanged(e.currentTarget.valueAsNumber)} />
   </div>
 {/if}
 
 {#if selectedObject instanceof fabric.Rect || selectedObject instanceof fabric.Circle}
-  <div class="input-group input-group-sm flex-nowrap fill">
-    <span class="input-group-text" title={$tr("params.vector.fill")}>
+  <div class="flex items-stretch flex-nowrap" style="width: 12em">
+    <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.vector.fill")}>
       <MdIcon icon="format_color_fill" />
     </span>
     <select
-      class="form-select"
+      class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1"
       value={selectedObject.fill}
       onchange={(e) => fillChanged(e.currentTarget.value)}>
       <option value="transparent">{$tr("params.color.transparent")}</option>
@@ -77,12 +77,3 @@
     </select>
   </div>
 {/if}
-
-<style>
-  .input-group {
-    width: 7em;
-  }
-  .input-group.fill {
-    width: 12em;
-  }
-</style>

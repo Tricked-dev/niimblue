@@ -28,6 +28,10 @@ export class CustomCanvas extends fabric.Canvas {
   private customBackground: boolean = true;
   private highlightMirror: boolean = true;
   private virtualZoomRatio: number = 1;
+  private scrollWrapper: HTMLElement | null = null;
+  private pinchPointers = new Map<number, { x: number; y: number }>();
+  private pinchStartDist: number = 0;
+  private pinchStartZoom: number = 1;
 
   constructor(
     el?: string | HTMLCanvasElement,
@@ -38,29 +42,93 @@ export class CustomCanvas extends fabric.Canvas {
     this.preserveObjectStacking = true;
   }
 
+  setScrollWrapper(wrapper: HTMLElement) {
+    this.scrollWrapper = wrapper;
+    this.setupPinch(wrapper);
+  }
+
   private setupZoom() {
     this.on("mouse:wheel", (opt) => {
       const event = opt.e as WheelEvent;
       event.preventDefault();
-
-      const delta = event.deltaY;
-      if (delta > 0) {
-        this.virtualZoomOut();
-      } else {
-        this.virtualZoomIn();
-      }
+      const rect = this.getElement().getBoundingClientRect();
+      const cursorX = event.clientX - rect.left;
+      const cursorY = event.clientY - rect.top;
+      const factor = event.deltaY > 0 ? 0.95 : 1.05;
+      this.zoomAroundPoint(cursorX, cursorY, factor);
     });
+
     this.on("mouse:down:before", (opt) => {
       const event = opt.e as MouseEvent;
-      if (event.button == 1) {
+      if (event.button === 1) {
         event.preventDefault();
-        this.resetVirtualZoom();
+        this.fitToWrapper();
       }
     });
   }
 
+  private setupPinch(wrapper: HTMLElement) {
+    wrapper.addEventListener(
+      "pointerdown",
+      (e) => {
+        this.pinchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (this.pinchPointers.size === 2) {
+          const pts = Array.from(this.pinchPointers.values());
+          this.pinchStartDist = Math.hypot(
+            pts[1].x - pts[0].x,
+            pts[1].y - pts[0].y,
+          );
+          this.pinchStartZoom = this.virtualZoomRatio;
+        }
+      },
+      { passive: true },
+    );
+
+    wrapper.addEventListener(
+      "pointermove",
+      (e) => {
+        if (!this.pinchPointers.has(e.pointerId)) return;
+        this.pinchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (this.pinchPointers.size === 2) {
+          const pts = Array.from(this.pinchPointers.values());
+          const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+          if (this.pinchStartDist > 0) {
+            const newZoom = this.pinchStartZoom * (dist / this.pinchStartDist);
+            this.virtualZoom(newZoom);
+          }
+        }
+      },
+      { passive: true },
+    );
+
+    const clearPointer = (e: PointerEvent) => {
+      this.pinchPointers.delete(e.pointerId);
+      this.pinchStartDist = 0;
+    };
+    wrapper.addEventListener("pointerup", clearPointer, { passive: true });
+    wrapper.addEventListener("pointercancel", clearPointer, { passive: true });
+  }
+
+  zoomAroundPoint(canvasX: number, canvasY: number, factor: number) {
+    const newZoom = Math.min(
+      Math.max(0.1, this.virtualZoomRatio * factor),
+      20,
+    );
+    if (this.scrollWrapper) {
+      const labelPxX =
+        (this.scrollWrapper.scrollLeft + canvasX) / this.virtualZoomRatio;
+      const labelPxY =
+        (this.scrollWrapper.scrollTop + canvasY) / this.virtualZoomRatio;
+      this.virtualZoom(newZoom);
+      this.scrollWrapper.scrollLeft = labelPxX * newZoom - canvasX;
+      this.scrollWrapper.scrollTop = labelPxY * newZoom - canvasY;
+    } else {
+      this.virtualZoom(newZoom);
+    }
+  }
+
   public virtualZoom(newZoom: number) {
-    this.virtualZoomRatio = Math.min(Math.max(0.25, newZoom), 4);
+    this.virtualZoomRatio = Math.min(Math.max(0.1, newZoom), 20);
     this.setDimensions(
       {
         width: this.virtualZoomRatio * this.getWidth() + "px",
@@ -68,14 +136,15 @@ export class CustomCanvas extends fabric.Canvas {
       },
       { cssOnly: true },
     );
+    this.fire("viewport:changed" as any, { zoom: this.virtualZoomRatio });
   }
 
   public virtualZoomIn() {
-    this.virtualZoom(this.virtualZoomRatio * 1.05);
+    this.virtualZoom(this.virtualZoomRatio * 1.1);
   }
 
   public virtualZoomOut() {
-    this.virtualZoom(this.virtualZoomRatio * 0.95);
+    this.virtualZoom(this.virtualZoomRatio * 0.9);
   }
 
   public getVirtualZoom(): number {
@@ -84,6 +153,22 @@ export class CustomCanvas extends fabric.Canvas {
 
   public resetVirtualZoom() {
     this.virtualZoom(1);
+  }
+
+  public fitToWrapper() {
+    if (!this.scrollWrapper) {
+      this.resetVirtualZoom();
+      return;
+    }
+    const wrapW = this.scrollWrapper.clientWidth;
+    const wrapH = this.scrollWrapper.clientHeight;
+    const zoomX = wrapW / this.getWidth();
+    const zoomY = wrapH / this.getHeight();
+    this.virtualZoom(Math.min(zoomX, zoomY) * 0.9);
+    const cssW = this.virtualZoomRatio * this.getWidth();
+    const cssH = this.virtualZoomRatio * this.getHeight();
+    this.scrollWrapper.scrollLeft = (cssW - wrapW) / 2;
+    this.scrollWrapper.scrollTop = (cssH - wrapH) / 2;
   }
 
   setLabelProps(value: LabelProps) {
@@ -304,6 +389,7 @@ export class CustomCanvas extends fabric.Canvas {
 
     ctx.restore();
   }
+
   override _renderObjects(
     ctx: CanvasRenderingContext2D,
     objects: fabric.FabricObject[],

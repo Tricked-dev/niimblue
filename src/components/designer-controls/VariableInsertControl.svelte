@@ -5,6 +5,8 @@
   import Barcode from "$/fabric-object/barcode";
   import MdIcon from "$/components/basic/MdIcon.svelte";
 
+  let open = $state(false);
+
   interface Props {
     selectedObject: fabric.FabricObject;
     valueUpdated: () => void;
@@ -31,25 +33,29 @@
   };
 </script>
 
-<div class="btn-group btn-group-sm" role="group" title={$tr("params.variables.insert")}>
-  <button class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+<svelte:window onclick={() => open = false} />
+
+<div class="relative flex items-stretch" role="group" title={$tr("params.variables.insert")} onclick={(e) => e.stopPropagation()}>
+  <button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={() => open = !open}>
     <MdIcon icon="data_object" />
   </button>
 
-  <div class="dropdown-menu px-2">
-    <div class="d-flex gap-1 flex-wrap">
-      <button class="btn btn-secondary btn-sm" onclick={() => insertDateTime()}>
+  {#if open}
+  <div class="absolute z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl top-full mt-1 min-w-[300px] p-2">
+    <div class="flex gap-1 flex-wrap">
+      <button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={() => insertDateTime()}>
         <MdIcon icon="calendar_today" />
         {$tr("params.variables.insert.datetime")}
       </button>
-      <button class="btn btn-secondary btn-sm" onclick={() => insertDateTime("YYYY-MM-DD")}>
+      <button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={() => insertDateTime("YYYY-MM-DD")}>
         <MdIcon icon="calendar_today" />
         {$tr("params.variables.insert.date")}
       </button>
-      <button class="btn btn-secondary btn-sm" onclick={() => insertDateTime("HH:mm:ss")}>
+      <button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={() => insertDateTime("HH:mm:ss")}>
         <MdIcon icon="schedule" />
         {$tr("params.variables.insert.time")}
       </button>
     </div>
   </div>
+  {/if}
 </div>

@@ -1,0 +1,201 @@
+<h2>How should it behave on mobile?</h2>
+<p class="subtitle">On desktop: vertical tool rail left, canvas center, properties right. On mobile the sidebars need to adapt. Which approach?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1e1e2e;border-radius:6px;height:240px;display:flex;gap:12px;padding:10px;overflow:hidden">
+
+        <!-- Desktop mini -->
+        <div style="flex:1;display:flex;flex-direction:column;font-size:9px;color:#cdd6f4">
+          <div style="color:#a6adc8;text-align:center;margin-bottom:4px;font-size:8px">🖥 Desktop</div>
+          <div style="flex:1;background:#181825;border-radius:4px;display:flex;overflow:hidden">
+            <div style="width:28px;background:#313244;border-right:1px solid #45475a;display:flex;flex-direction:column;padding:3px 2px;gap:2px;align-items:center">
+              <div style="background:#45475a;width:22px;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center">T</div>
+              <div style="background:#45475a;width:22px;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center">▦</div>
+              <div style="background:#45475a;width:22px;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center">▣</div>
+              <div style="flex:1"></div>
+              <div style="background:#45475a;width:22px;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center">🖨</div>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;justify-content:center">
+              <div style="background:white;width:70px;height:28px;border-radius:2px;font-size:8px;color:#333;display:flex;align-items:center;justify-content:center">Canvas</div>
+            </div>
+            <div style="width:55px;background:#2a2a3e;border-left:1px solid #45475a;padding:3px;font-size:7px;color:#cdd6f4">
+              <div style="color:#a6adc8;font-size:7px">PROPERTIES</div>
+              <div style="background:#313244;padding:1px 3px;border-radius:2px;margin:2px 0">Font</div>
+              <div style="background:#313244;padding:1px 3px;border-radius:2px;margin:2px 0">Size</div>
+              <div style="color:#a6adc8;font-size:7px;margin-top:3px">PRINTER</div>
+              <div style="background:#313244;padding:1px 3px;border-radius:2px;margin:2px 0">D110 ✓</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="width:1px;background:#45475a"></div>
+
+        <!-- Mobile mini -->
+        <div style="width:80px;display:flex;flex-direction:column;font-size:9px;color:#cdd6f4">
+          <div style="color:#a6adc8;text-align:center;margin-bottom:4px;font-size:8px">📱 Mobile</div>
+          <div style="flex:1;background:#181825;border-radius:4px;display:flex;flex-direction:column;overflow:hidden">
+            <!-- top bar -->
+            <div style="background:#313244;padding:2px 4px;display:flex;gap:2px;border-bottom:1px solid #45475a;font-size:8px">
+              <span style="color:#89b4fa;font-weight:bold">Niim</span>
+              <span style="flex:1"></span>
+              <span>⎌</span><span>↩</span><span style="color:#4f9ef8">🖨</span>
+            </div>
+            <!-- canvas fills screen -->
+            <div style="flex:1;display:flex;align-items:center;justify-content:center">
+              <div style="background:white;width:55px;height:22px;border-radius:2px;font-size:7px;color:#333;display:flex;align-items:center;justify-content:center">Canvas</div>
+            </div>
+            <!-- bottom tab bar -->
+            <div style="background:#313244;border-top:1px solid #45475a;display:flex;justify-content:space-around;padding:3px 2px;font-size:10px">
+              <span title="Tools">T</span>
+              <span title="Properties" style="color:#89b4fa">≡</span>
+              <span title="Printer">🖨</span>
+            </div>
+          </div>
+          <!-- sheet peek -->
+          <div style="background:#2a2a3e;border:1px solid #45475a;border-radius:4px;margin-top:3px;padding:3px 4px;font-size:7px;color:#cdd6f4">
+            <div style="text-align:center;color:#a6adc8;margin-bottom:2px">— Properties —</div>
+            <div style="background:#313244;padding:1px 3px;border-radius:2px;margin-bottom:2px">Font: Noto Sans</div>
+            <div style="background:#313244;padding:1px 3px;border-radius:2px">Size: 14pt</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Bottom Sheet Tabs</h3>
+      <p>On mobile: canvas fills screen, bottom tab bar switches between Tools / Properties / Printer panels which slide up as a sheet. Top bar keeps undo/redo/print.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1e1e2e;border-radius:6px;height:240px;display:flex;gap:12px;padding:10px;overflow:hidden">
+
+        <!-- Desktop mini -->
+        <div style="flex:1;display:flex;flex-direction:column;font-size:9px;color:#cdd6f4">
+          <div style="color:#a6adc8;text-align:center;margin-bottom:4px;font-size:8px">🖥 Desktop</div>
+          <div style="flex:1;background:#181825;border-radius:4px;display:flex;overflow:hidden">
+            <div style="width:28px;background:#313244;border-right:1px solid #45475a;display:flex;flex-direction:column;padding:3px 2px;gap:2px;align-items:center">
+              <div style="background:#45475a;width:22px;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center">T</div>
+              <div style="background:#45475a;width:22px;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center">▦</div>
+              <div style="background:#45475a;width:22px;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center">▣</div>
+              <div style="flex:1"></div>
+              <div style="background:#45475a;width:22px;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center">🖨</div>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;justify-content:center">
+              <div style="background:white;width:70px;height:28px;border-radius:2px;font-size:8px;color:#333;display:flex;align-items:center;justify-content:center">Canvas</div>
+            </div>
+            <div style="width:55px;background:#2a2a3e;border-left:1px solid #45475a;padding:3px;font-size:7px;color:#cdd6f4">
+              <div style="color:#a6adc8;font-size:7px">PROPERTIES</div>
+              <div style="background:#313244;padding:1px 3px;border-radius:2px;margin:2px 0">Font</div>
+              <div style="background:#313244;padding:1px 3px;border-radius:2px;margin:2px 0">Size</div>
+              <div style="color:#a6adc8;font-size:7px;margin-top:3px">PRINTER</div>
+              <div style="background:#313244;padding:1px 3px;border-radius:2px;margin:2px 0">D110 ✓</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="width:1px;background:#45475a"></div>
+
+        <!-- Mobile mini -->
+        <div style="width:80px;display:flex;flex-direction:column;font-size:9px;color:#cdd6f4">
+          <div style="color:#a6adc8;text-align:center;margin-bottom:4px;font-size:8px">📱 Mobile</div>
+          <div style="flex:1;background:#181825;border-radius:4px;display:flex;flex-direction:column;overflow:hidden">
+            <!-- top bar with hamburger -->
+            <div style="background:#313244;padding:2px 4px;display:flex;gap:2px;align-items:center;border-bottom:1px solid #45475a;font-size:8px">
+              <span>☰</span>
+              <span style="color:#89b4fa;font-weight:bold;flex:1;text-align:center">Niim</span>
+              <span style="color:#4f9ef8">🖨</span>
+            </div>
+            <!-- canvas -->
+            <div style="flex:1;display:flex;align-items:center;justify-content:center">
+              <div style="background:white;width:55px;height:22px;border-radius:2px;font-size:7px;color:#333;display:flex;align-items:center;justify-content:center">Canvas</div>
+            </div>
+            <!-- floating action buttons -->
+            <div style="position:relative;height:0">
+              <div style="position:absolute;bottom:4px;right:4px;display:flex;gap:2px">
+                <div style="background:#4f9ef8;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px">+</div>
+                <div style="background:#45475a;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px">≡</div>
+              </div>
+            </div>
+          </div>
+          <!-- drawer peek -->
+          <div style="background:#2a2a3e;border:1px solid #45475a;border-radius:4px;margin-top:3px;padding:3px 4px;font-size:7px;color:#cdd6f4">
+            <div style="text-align:center;color:#a6adc8;margin-bottom:2px">◀ Drawer slides in</div>
+            <div style="background:#313244;padding:1px 3px;border-radius:2px;margin-bottom:2px">Tools</div>
+            <div style="background:#313244;padding:1px 3px;border-radius:2px">Printer: D110</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Hamburger + Drawer</h3>
+      <p>On mobile: hamburger menu slides in a full left drawer with tools + label settings. Floating action buttons for quick add and properties. Canvas maximized.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1e1e2e;border-radius:6px;height:240px;display:flex;gap:12px;padding:10px;overflow:hidden">
+
+        <!-- Desktop mini -->
+        <div style="flex:1;display:flex;flex-direction:column;font-size:9px;color:#cdd6f4">
+          <div style="color:#a6adc8;text-align:center;margin-bottom:4px;font-size:8px">🖥 Desktop</div>
+          <div style="flex:1;background:#181825;border-radius:4px;display:flex;overflow:hidden">
+            <div style="width:28px;background:#313244;border-right:1px solid #45475a;display:flex;flex-direction:column;padding:3px 2px;gap:2px;align-items:center">
+              <div style="background:#45475a;width:22px;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center">T</div>
+              <div style="background:#45475a;width:22px;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center">▦</div>
+              <div style="flex:1"></div>
+              <div style="background:#45475a;width:22px;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center">🖨</div>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;justify-content:center">
+              <div style="background:white;width:70px;height:28px;border-radius:2px;font-size:8px;color:#333;display:flex;align-items:center;justify-content:center">Canvas</div>
+            </div>
+            <div style="width:55px;background:#2a2a3e;border-left:1px solid #45475a;padding:3px;font-size:7px;color:#cdd6f4">
+              <div style="color:#a6adc8;font-size:7px">PROPERTIES</div>
+              <div style="background:#313244;padding:1px 3px;border-radius:2px;margin:2px 0">Font</div>
+              <div style="background:#313244;padding:1px 3px;border-radius:2px;margin:2px 0">Size</div>
+              <div style="color:#a6adc8;font-size:7px;margin-top:3px">PRINTER</div>
+              <div style="background:#313244;padding:1px 3px;border-radius:2px;margin:2px 0">D110 ✓</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="width:1px;background:#45475a"></div>
+
+        <!-- Mobile mini -->
+        <div style="width:80px;display:flex;flex-direction:column;font-size:9px;color:#cdd6f4">
+          <div style="color:#a6adc8;text-align:center;margin-bottom:4px;font-size:8px">📱 Mobile</div>
+          <div style="flex:1;background:#181825;border-radius:4px;display:flex;flex-direction:column;overflow:hidden">
+            <!-- compact top bar -->
+            <div style="background:#313244;padding:2px 4px;display:flex;gap:2px;align-items:center;border-bottom:1px solid #45475a;font-size:9px">
+              <span>T</span><span>▦</span><span>▣</span>
+              <span style="flex:1"></span>
+              <span>⎌</span><span style="color:#4f9ef8">🖨</span>
+            </div>
+            <!-- canvas -->
+            <div style="flex:1;display:flex;align-items:center;justify-content:center">
+              <div style="background:white;width:55px;height:22px;border-radius:2px;font-size:7px;color:#333;display:flex;align-items:center;justify-content:center">Canvas</div>
+            </div>
+            <!-- collapsible bottom panel -->
+            <div style="background:#2a2a3e;border-top:1px solid #45475a;padding:2px 4px;">
+              <div style="display:flex;justify-content:space-between;font-size:8px;color:#a6adc8">
+                <span>Properties</span><span>▲</span>
+              </div>
+              <div style="font-size:7px;color:#cdd6f4;margin-top:2px">
+                <span style="background:#313244;padding:1px 3px;border-radius:2px">Font · Size</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Compact Top Bar on Mobile</h3>
+      <p>On mobile: tool rail icons move into a compact horizontal top bar. Properties panel collapses to a pull-up strip at the bottom. The rail + panels reappear on wider screens.</p>
+    </div>
+  </div>
+
+</div>

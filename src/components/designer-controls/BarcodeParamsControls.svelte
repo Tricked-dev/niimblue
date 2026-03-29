@@ -14,10 +14,10 @@
 
 <input type="hidden" value={editRevision}>
 
-<div class="input-group input-group-sm flex-nowrap">
-  <span class="input-group-text" title={$tr("params.barcode.encoding")}><MdIcon icon="code" /></span>
+<div class="flex items-stretch flex-nowrap" style="width: fit-content">
+  <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.barcode.encoding")}><MdIcon icon="code" /></span>
   <select
-    class="form-select"
+    class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
     value={selectedBarcode.encoding}
     onchange={(e) => {
       selectedBarcode?.set("encoding", e.currentTarget.value ?? "EAN13");
@@ -28,12 +28,12 @@
   </select>
 </div>
 
-<div class="input-group input-group-sm flex-nowrap">
-  <span class="input-group-text" title={$tr("params.barcode.scale")}>
+<div class="flex items-stretch flex-nowrap" style="width: fit-content">
+  <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.barcode.scale")}>
     <MdIcon icon="settings_ethernet" />
   </span>
   <input
-    class="barcode-width form-control"
+    class="w-16 bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
     type="number"
     min="1"
     value={selectedBarcode.scaleFactor}
@@ -44,7 +44,7 @@
 </div>
 
 <button
-  class="btn btn-sm {selectedBarcode.printText ? 'btn-secondary' : ''}"
+  class="inline-flex items-center gap-1 px-2 h-7 rounded border text-xs transition-colors {selectedBarcode.printText ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
   title={$tr("params.barcode.enable_caption")}
   onclick={() => {
     selectedBarcode?.set("printText", !selectedBarcode.printText);
@@ -53,12 +53,12 @@
   123
 </button>
 
-<div class="input-group input-group-sm flex-nowrap">
-  <span class="input-group-text" title={$tr("params.barcode.font_size")}>
+<div class="flex items-stretch flex-nowrap" style="width: fit-content">
+  <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.barcode.font_size")}>
     <MdIcon icon="format_size" />
   </span>
   <input
-    class="barcode-width form-control"
+    class="w-16 bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
     type="number"
     min="1"
     value={selectedBarcode.fontSize}
@@ -69,24 +69,10 @@
 </div>
 
 <textarea
-  class="barcode-content form-control"
+  class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+  style="height: 100px"
   value={selectedBarcode.text}
   oninput={(e) => {
     selectedBarcode?.set("text", e.currentTarget.value);
     valueUpdated();
   }}></textarea>
-
-
-<style>
-  .input-group {
-    width: fit-content;
-  }
-
-  textarea.barcode-content {
-    height: 100px;
-  }
-
-  input.barcode-width {
-    max-width: 64px;
-  }
-</style>

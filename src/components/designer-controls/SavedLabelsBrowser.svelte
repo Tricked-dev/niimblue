@@ -46,47 +46,46 @@
   };
 </script>
 
-<div class="labels-browser overflow-y-auto border d-flex p-2 gap-1 flex-wrap {className}">
+<div class="overflow-y-auto border border-zinc-800 flex p-2 gap-1 flex-wrap {className}" style="max-height: 200px; max-width: 100%; min-height: 96px;">
   {#each labels as item, idx (item.id ?? item.timestamp)}
     <div
       tabindex="0"
-      class="btn p-0 card-wrapper d-flex justify-content-center align-items-center {selectedIndex === idx
-        ? 'border-primary'
-        : ''}"
+      class="p-0 flex justify-center items-center cursor-pointer border-2 {selectedIndex === idx ? 'border-blue-500' : 'border-transparent'}"
+      style="width: 96px; height: 96px;"
       onkeydown={() => onItemClicked(idx)}
       onclick={() => onItemClicked(idx)}
       role="button">
       <div
-        class="card print-start-{item.label.printDirection} d-flex justify-content-center align-items-center"
-        style="width: {scaleDimensions(item.label).width}%; height: {scaleDimensions(item.label).height}%;">
-        <div class="buttons d-flex">
+        class="bg-white relative flex justify-center items-center"
+        style="width: {scaleDimensions(item.label).width}%; height: {scaleDimensions(item.label).height}%; border-left: {item.label.printDirection === 'left' ? '2px solid #ff4646' : ''}; border-top: {item.label.printDirection === 'top' ? '2px solid #ff4646' : ''};">
+        <div class="absolute top-0 right-0 z-[2] flex">
           <button
-            class="btn text-primary-emphasis"
+            class="p-0 leading-none text-blue-400"
             onclick={(e) => exportRequested(e, idx)}
             title={$tr("params.saved_labels.save.json")}>
             <MdIcon icon="download" />
           </button>
 
           {#if deleteIndex === idx}
-            <button class="remove btn text-danger-emphasis" onclick={(e) => deleteConfirmed(e, idx)}>
+            <button class="p-0 leading-none text-red-500" onclick={(e) => deleteConfirmed(e, idx)}>
               <MdIcon icon="delete" />
             </button>
-            <button class="remove btn text-success" onclick={(e) => deleteRejected(e)}>
+            <button class="p-0 leading-none text-green-400" onclick={(e) => deleteRejected(e)}>
               <MdIcon icon="close" />
             </button>
           {:else}
-            <button class="remove btn text-danger-emphasis" onclick={(e) => deleteRequested(e, idx)}>
+            <button class="p-0 leading-none text-red-500" onclick={(e) => deleteRequested(e, idx)}>
               <MdIcon icon="delete" />
             </button>
           {/if}
         </div>
 
         {#if item.thumbnailBase64}
-          <img class="thumbnail" src={item.thumbnailBase64} alt="thumbnail" />
+          <img class="w-full h-full absolute" src={item.thumbnailBase64} alt="thumbnail" />
         {/if}
 
         {#if item.title}
-          <span class="label p-1">
+          <span class="p-1 bg-white/80 text-black rounded-lg z-[1] text-[10px]">
             {item.title}
           </span>
         {/if}
@@ -94,53 +93,3 @@
     </div>
   {/each}
 </div>
-
-<style>
-  .labels-browser {
-    max-height: 200px;
-    max-width: 100%;
-    min-height: 96px;
-  }
-
-  .card-wrapper {
-    width: 96px;
-    height: 96px;
-  }
-
-  .card {
-    background-color: white;
-    position: relative;
-  }
-
-  .card > .buttons {
-    position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 2;
-  }
-
-  .card > .buttons > button {
-    padding: 0;
-    line-height: 100%;
-  }
-
-  .card > .label {
-    background-color: rgba(255, 255, 255, 0.8);
-    color: black;
-    border-radius: 8px;
-    z-index: 1;
-  }
-
-  .card.print-start-left {
-    border-left: 2px solid #ff4646;
-  }
-  .card.print-start-top {
-    border-top: 2px solid #ff4646;
-  }
-
-  .card .thumbnail {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-  }
-</style>

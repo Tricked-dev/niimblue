@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NiimBlue Designer — Full Design</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #11111b; color: #cdd6f4; font-family: system-ui, sans-serif; padding: 20px; }
+  h1 { color: #89b4fa; font-size: 18px; margin-bottom: 4px; }
+  .sub { color: #6c7086; font-size: 13px; margin-bottom: 20px; }
+
+  /* ---- MOCKUP ---- */
+  .app {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 42px 1fr 220px;
+    height: 520px;
+    border: 1px solid #313244;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 11px;
+    margin-bottom: 28px;
+  }
+
+  /* Top bar spans all 3 cols */
+  .topbar {
+    grid-column: 1 / -1;
+    background: #1e1e2e;
+    border-bottom: 1px solid #313244;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    height: 38px;
+  }
+  .topbar .logo { color: #89b4fa; font-weight: 700; font-size: 14px; margin-right: 8px; }
+  .topbar .logo span { color: #f38ba8; }
+  .tb-btn {
+    background: #313244; border: none; color: #cdd6f4; padding: 4px 8px;
+    border-radius: 4px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+  }
+  .tb-btn.primary { background: #89b4fa; color: #1e1e2e; font-weight: 600; }
+  .tb-btn.danger { background: #f38ba8; color: #1e1e2e; }
+  .sep { width: 1px; height: 18px; background: #313244; margin: 0 4px; }
+  .spacer { flex: 1; }
+  .conn-badge { background: #a6e3a1; color: #1e1e2e; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+
+  /* Left tool rail */
+  .rail {
+    background: #181825;
+    border-right: 1px solid #313244;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    gap: 4px;
+  }
+  .rail-btn {
+    width: 32px; height: 32px;
+    background: transparent; border: none; border-radius: 6px;
+    color: #6c7086; font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.1s;
+  }
+  .rail-btn:hover, .rail-btn.active { background: #313244; color: #cdd6f4; }
+  .rail-btn.active { color: #89b4fa; }
+  .rail-sep { width: 24px; height: 1px; background: #313244; margin: 2px 0; }
+
+  /* Canvas area */
+  .canvas-area {
+    background: #11111b;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+  .ruler-corner { width: 18px; height: 18px; background: #1e1e2e; flex-shrink: 0; }
+  .ruler-row { display: flex; align-items: stretch; }
+  .ruler-h {
+    flex: 1; height: 18px; background: #1e1e2e;
+    border-bottom: 1px solid #313244;
+    display: flex; align-items: flex-end; padding: 0 0 2px 0;
+    overflow: hidden; position: relative;
+  }
+  .ruler-v {
+    width: 18px; background: #1e1e2e;
+    border-right: 1px solid #313244;
+    display: flex; flex-direction: column;
+    align-items: center; padding-top: 4px;
+    overflow: hidden; flex-shrink: 0;
+  }
+  .ruler-tick { color: #45475a; font-size: 7px; line-height: 1; }
+  .ruler-tick.major { color: #6c7086; }
+  .canvas-scroll { flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; position: relative; }
+  .label-canvas {
+    background: white;
+    border-radius: 3px;
+    width: 320px; height: 120px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #666; font-style: italic;
+  }
+  .statusbar {
+    height: 22px; background: #1e1e2e; border-top: 1px solid #313244;
+    display: flex; align-items: center; padding: 0 10px; gap: 16px;
+    font-size: 10px; color: #585b70;
+  }
+  .statusbar span { color: #a6adc8; }
+
+  /* Zoom controls overlay */
+  .zoom-overlay {
+    position: absolute; bottom: 28px; right: 10px;
+    display: flex; gap: 4px; align-items: center;
+  }
+  .zoom-btn {
+    background: #313244; border: none; color: #cdd6f4;
+    width: 22px; height: 22px; border-radius: 4px;
+    font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .zoom-label { background: #313244; color: #a6adc8; padding: 0 6px; height: 22px; border-radius: 4px; display: flex; align-items: center; font-size: 10px; }
+
+  /* Right panel */
+  .panel {
+    background: #181825;
+    border-left: 1px solid #313244;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-section { border-bottom: 1px solid #313244; }
+  .panel-header {
+    padding: 8px 10px 6px;
+    font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    color: #585b70; display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer;
+  }
+  .panel-header:hover { color: #a6adc8; }
+  .panel-body { padding: 0 10px 10px; }
+  .field-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .field-label { color: #6c7086; font-size: 10px; min-width: 36px; }
+  .field-val {
+    background: #1e1e2e; border: 1px solid #313244; border-radius: 4px;
+    color: #cdd6f4; font-size: 11px; padding: 3px 6px; flex: 1;
+  }
+  .btn-group { display: flex; gap: 3px; }
+  .sm-btn {
+    background: #313244; border: none; color: #cdd6f4;
+    padding: 3px 7px; border-radius: 4px; font-size: 11px; cursor: pointer;
+  }
+  .sm-btn.active { background: #89b4fa; color: #1e1e2e; font-weight: 600; }
+  .panel-scroll { flex: 1; overflow-y: auto; }
+
+  /* Object selected highlight */
+  .obj-selected {
+    outline: 2px dashed #89b4fa;
+    outline-offset: 4px;
+  }
+
+  /* ---- NOTES ---- */
+  .notes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .note { background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; padding: 14px; }
+  .note h3 { color: #89b4fa; font-size: 13px; margin-bottom: 8px; }
+  .note ul { color: #a6adc8; font-size: 12px; line-height: 1.7; padding-left: 16px; }
+  .note ul li { list-style: disc; }
+
+  /* Mobile mockup */
+  .mobile-section { margin-bottom: 28px; }
+  .mobile-section h2 { color: #cdd6f4; font-size: 14px; margin-bottom: 12px; }
+  .mobile-frames { display: flex; gap: 16px; }
+  .phone {
+    width: 160px; background: #1e1e2e; border: 1px solid #313244;
+    border-radius: 12px; overflow: hidden; font-size: 10px; color: #cdd6f4;
+    flex-shrink: 0;
+  }
+  .phone-label { text-align: center; color: #6c7086; font-size: 10px; padding: 6px 0 2px; }
+  .phone-screen { display: flex; flex-direction: column; height: 280px; }
+  .mob-topbar {
+    background: #181825; border-bottom: 1px solid #313244;
+    display: flex; align-items: center; padding: 4px 6px; gap: 4px;
+  }
+  .mob-logo { color: #89b4fa; font-weight: 700; font-size: 11px; flex: 1; }
+  .mob-canvas { flex: 1; background: #11111b; display: flex; align-items: center; justify-content: center; position: relative; }
+  .mob-label { background: white; width: 110px; height: 42px; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #666; box-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+  .mob-sheet {
+    background: #1e1e2e; border-top: 2px solid #313244;
+    padding: 6px 8px 8px;
+  }
+  .mob-sheet-handle { width: 30px; height: 3px; background: #45475a; border-radius: 2px; margin: 0 auto 6px; }
+  .mob-sheet-tabs { display: flex; gap: 3px; margin-bottom: 6px; }
+  .mob-tab { flex: 1; text-align: center; padding: 3px; border-radius: 4px; background: #313244; font-size: 9px; }
+  .mob-tab.active { background: #89b4fa; color: #1e1e2e; font-weight: 600; }
+  .mob-field { background: #313244; border-radius: 3px; padding: 3px 5px; margin-bottom: 3px; font-size: 9px; color: #a6adc8; }
+  .mob-topbar-icons { display: flex; gap: 3px; }
+  .mob-icon { background: #313244; border-radius: 3px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .mob-icon.primary { background: #89b4fa; color: #1e1e2e; }
+</style>
+</head>
+<body>
+
+<h1>NiimBlue Label Designer — Full Redesign</h1>
+<p class="sub">Desktop layout with rulers, tool rail, properties panel · Mobile collapses to compact top bar + pull-up sheet</p>
+
+<!-- MAIN DESKTOP MOCKUP -->
+<div class="app">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <span class="logo"><span>Niim</span>Blue</span>
+    <div class="sep"></div>
+    <button class="tb-btn">💾 Save</button>
+    <button class="tb-btn">📂 Open</button>
+    <div class="sep"></div>
+    <button class="tb-btn">⎌</button>
+    <button class="tb-btn">↩</button>
+    <div class="sep"></div>
+    <button class="tb-btn">🗑 Clear</button>
+    <div class="spacer"></div>
+    <span class="conn-badge">● D110 connected</span>
+    <div class="sep"></div>
+    <button class="tb-btn">👁 Preview</button>
+    <button class="tb-btn primary">🖨 Print</button>
+  </div>
+
+  <!-- Left tool rail -->
+  <div class="rail">
+    <button class="rail-btn active" title="Text">T</button>
+    <button class="rail-btn" title="Barcode">▦</button>
+    <button class="rail-btn" title="QR Code">▣</button>
+    <button class="rail-btn" title="Shape">⬛</button>
+    <button class="rail-btn" title="Image">🖼</button>
+    <button class="rail-btn" title="Icon">★</button>
+    <div class="rail-sep"></div>
+    <button class="rail-btn" title="CSV">⋮</button>
+    <div style="flex:1"></div>
+    <div class="rail-sep"></div>
+    <button class="rail-btn" title="Label Settings">⚙</button>
+    <button class="rail-btn" title="Saved Labels">📁</button>
+  </div>
+
+  <!-- Canvas area -->
+  <div class="canvas-area">
+    <!-- Ruler row -->
+    <div class="ruler-row" style="display:flex;height:18px;flex-shrink:0">
+      <div class="ruler-corner"></div>
+      <div class="ruler-h">
+        <div style="position:absolute;left:8px;bottom:3px;display:flex;gap:0;color:#45475a;font-size:7px">
+          <span style="margin-right:28px">0</span>
+          <span style="margin-right:28px">5</span>
+          <span style="margin-right:28px">10</span>
+          <span style="margin-right:28px">15</span>
+          <span style="margin-right:28px">20</span>
+          <span style="margin-right:28px">25</span>
+          <span>30mm</span>
+        </div>
+      </div>
+    </div>
+    <!-- Canvas with left ruler -->
+    <div style="flex:1;display:flex;overflow:hidden;position:relative">
+      <div class="ruler-v">
+        <span class="ruler-tick" style="margin-bottom:14px">0</span>
+        <span class="ruler-tick" style="margin-bottom:14px">5</span>
+        <span class="ruler-tick" style="margin-bottom:14px">10</span>
+        <span class="ruler-tick" style="margin-bottom:14px">15</span>
+        <span class="ruler-tick">20</span>
+      </div>
+      <div class="canvas-scroll">
+        <div class="label-canvas obj-selected">
+          Label canvas (fabric.js) · pan &amp; zoom
+        </div>
+      </div>
+      <div class="zoom-overlay">
+        <button class="zoom-btn">−</button>
+        <span class="zoom-label">100%</span>
+        <button class="zoom-btn">+</button>
+        <button class="zoom-btn" title="Fit to screen">⊡</button>
+      </div>
+    </div>
+    <!-- Status bar -->
+    <div class="statusbar">
+      80 × 30 mm · <span>203 dpi</span> · X: <span>12</span> Y: <span>8</span> · W: <span>60</span> H: <span>12</span>
+      <span style="flex:1"></span>
+      Scroll to zoom · Drag to pan
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="panel">
+    <div class="panel-scroll">
+
+      <!-- Object properties (shown when object selected) -->
+      <div class="panel-section">
+        <div class="panel-header">Text <span style="color:#89b4fa">▾</span></div>
+        <div class="panel-body">
+          <div class="field-row">
+            <span class="field-label">Font</span>
+            <span class="field-val">Noto Sans</span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">Size</span>
+            <span class="field-val" style="max-width:50px">14</span>
+            <div class="btn-group">
+              <button class="sm-btn active">B</button>
+              <button class="sm-btn" style="font-style:italic">I</button>
+              <button class="sm-btn" style="text-decoration:underline">U</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <span class="field-label">Align</span>
+            <div class="btn-group">
+              <button class="sm-btn">⊣</button>
+              <button class="sm-btn active">⊡</button>
+              <button class="sm-btn">⊢</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Position / size -->
+      <div class="panel-section">
+        <div class="panel-header">Position &amp; Size <span style="color:#585b70">▾</span></div>
+        <div class="panel-body">
+          <div class="field-row">
+            <span class="field-label">X / Y</span>
+            <span class="field-val" style="max-width:48px">12</span>
+            <span class="field-val" style="max-width:48px">8</span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">W / H</span>
+            <span class="field-val" style="max-width:48px">60</span>
+            <span class="field-val" style="max-width:48px">12</span>
+          </div>
+          <div class="field-row" style="margin-top:2px">
+            <button class="sm-btn" style="flex:1">⊣ Center H</button>
+            <button class="sm-btn" style="flex:1">⊤ Center V</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Label settings -->
+      <div class="panel-section">
+        <div class="panel-header">Label <span style="color:#585b70">▾</span></div>
+        <div class="panel-body">
+          <div class="field-row">
+            <span class="field-label">Size</span>
+            <span class="field-val" style="max-width:44px">80</span>
+            <span style="color:#585b70;font-size:10px">×</span>
+            <span class="field-val" style="max-width:44px">30</span>
+            <span style="color:#6c7086;font-size:10px">mm</span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">DPI</span>
+            <span class="field-val" style="max-width:60px">203</span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">Shape</span>
+            <span class="field-val">Rect</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Printer section -->
+      <div class="panel-section">
+        <div class="panel-header">Printer <span style="color:#585b70">▾</span></div>
+        <div class="panel-body">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+            <span style="background:#a6e3a1;color:#1e1e2e;padding:2px 6px;border-radius:8px;font-size:9px;font-weight:600">● Connected</span>
+            <span style="color:#a6adc8;font-size:10px">D110</span>
+          </div>
+          <div class="field-row">
+            <span class="field-label">Head</span>
+            <span style="color:#a6adc8;font-size:10px">384 px</span>
+          </div>
+          <button class="sm-btn" style="width:100%;margin-top:2px">Disconnect</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- NOTES -->
+<div class="notes">
+  <div class="note">
+    <h3>Layout — CSS Grid shell</h3>
+    <ul>
+      <li>New <code>DesignerShell.svelte</code> replaces Bootstrap container</li>
+      <li>Full-viewport CSS grid: topbar / rail / canvas / panel</li>
+      <li>MainPage becomes a thin wrapper</li>
+      <li>Bootstrap removed, Tailwind v4 + shadcn-svelte added</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>Canvas — rulers + pan/zoom</h3>
+    <ul>
+      <li>SVG ruler components (H + V) synced to canvas zoom &amp; pan</li>
+      <li>CustomCanvas gains <code>zoomToPoint()</code> + pointer drag-to-pan</li>
+      <li>Pinch-to-zoom on mobile via Pointer Events API</li>
+      <li>Zoom controls: −/+ buttons, % display, fit button</li>
+      <li>Status bar shows cursor coords + object size in mm</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>Right panel — shadcn Accordion sections</h3>
+    <ul>
+      <li>Collapsible sections: Text · Position · Label · Printer</li>
+      <li>Context-sensitive: shows only what's relevant to selection</li>
+      <li>Printer section replaces PrinterConnector in header</li>
+      <li>All existing control logic reused, just restyled</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>Tool rail — left vertical icons</h3>
+    <ul>
+      <li>Icon buttons with tooltips for each object type</li>
+      <li>Click opens inline popover (barcode type picker etc.)</li>
+      <li>Bottom of rail: ⚙ Label settings, 📁 Saved labels</li>
+      <li>Active tool highlighted in blue</li>
+    </ul>
+  </div>
+</div>
+
+<!-- MOBILE -->
+<div class="mobile-section">
+  <h2>Mobile layout</h2>
+  <div class="mobile-frames">
+
+    <!-- Default state -->
+    <div>
+      <div class="phone-label">Canvas view</div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="mob-topbar">
+            <span class="mob-logo">NiimBlue</span>
+            <div class="mob-topbar-icons">
+              <div class="mob-icon">T</div>
+              <div class="mob-icon">▦</div>
+              <div class="mob-icon">▣</div>
+              <div class="mob-icon">🖼</div>
+              <div class="mob-icon" style="font-size:8px">⎌</div>
+              <div class="mob-icon primary">🖨</div>
+            </div>
+          </div>
+          <div class="mob-canvas">
+            <div class="mob-label">Label canvas</div>
+          </div>
+          <div class="mob-sheet">
+            <div class="mob-sheet-handle"></div>
+            <div style="color:#585b70;font-size:9px;text-align:center">No selection · swipe up for panel</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Object selected, properties up -->
+    <div>
+      <div class="phone-label">Object selected</div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="mob-topbar">
+            <span class="mob-logo">NiimBlue</span>
+            <div class="mob-topbar-icons">
+              <div class="mob-icon">T</div>
+              <div class="mob-icon">▦</div>
+              <div class="mob-icon">▣</div>
+              <div class="mob-icon">🖼</div>
+              <div class="mob-icon" style="font-size:8px">⎌</div>
+              <div class="mob-icon primary">🖨</div>
+            </div>
+          </div>
+          <div class="mob-canvas" style="flex:0.6">
+            <div class="mob-label" style="outline:2px dashed #89b4fa;outline-offset:2px">Selected text</div>
+          </div>
+          <div class="mob-sheet" style="flex:0.4">
+            <div class="mob-sheet-handle"></div>
+            <div class="mob-sheet-tabs">
+              <div class="mob-tab active">Text</div>
+              <div class="mob-tab">Position</div>
+              <div class="mob-tab">Label</div>
+              <div class="mob-tab">Printer</div>
+            </div>
+            <div class="mob-field">Font: Noto Sans · 14pt</div>
+            <div class="mob-field">B · I · U · Align: center</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Printer tab -->
+    <div>
+      <div class="phone-label">Printer panel</div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="mob-topbar">
+            <span class="mob-logo">NiimBlue</span>
+            <div class="mob-topbar-icons">
+              <div class="mob-icon">T</div>
+              <div class="mob-icon">▦</div>
+              <div class="mob-icon">▣</div>
+              <div class="mob-icon">🖼</div>
+              <div class="mob-icon" style="font-size:8px">⎌</div>
+              <div class="mob-icon primary">🖨</div>
+            </div>
+          </div>
+          <div class="mob-canvas" style="flex:0.4">
+            <div class="mob-label">Label canvas</div>
+          </div>
+          <div class="mob-sheet" style="flex:0.6">
+            <div class="mob-sheet-handle"></div>
+            <div class="mob-sheet-tabs">
+              <div class="mob-tab">Text</div>
+              <div class="mob-tab">Position</div>
+              <div class="mob-tab">Label</div>
+              <div class="mob-tab active">Printer</div>
+            </div>
+            <div class="mob-field" style="background:#a6e3a1;color:#1e1e2e">● D110 — Connected</div>
+            <div class="mob-field">Printhead: 384 px</div>
+            <div class="mob-field" style="text-align:center;background:#313244;color:#cdd6f4">Disconnect</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

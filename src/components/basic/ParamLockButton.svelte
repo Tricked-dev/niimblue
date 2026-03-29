@@ -16,7 +16,7 @@
   }: Props = $props();
 </script>
 
-<button class="btn btn-sm btn-outline-secondary param-lock-btn" onclick={() => onClick(propName, value)}>
+<button class="inline-flex items-center px-1.5 h-7 rounded border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors" onclick={() => onClick(propName, value)}>
   {#if savedValue !== undefined}
     <MdIcon icon="lock" class="text-warning" />
   {:else}

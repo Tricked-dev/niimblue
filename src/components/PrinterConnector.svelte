@@ -23,6 +23,14 @@
   import type { MaterialIcon } from "material-icons";
   import FirmwareUpdater from "$/components/basic/FirmwareUpdater.svelte";
 
+  let settingsOpen = $state(false);
+  let printerInfoOpen = $state(false);
+  let modelMetaOpen = $state(false);
+  let rfidInfoOpen = $state(false);
+  let ribbonRfidInfoOpen = $state(false);
+  let heartbeatDataOpen = $state(false);
+  let testsOpen = $state(false);
+
   let connectionType = $state<ConnectionType>("bluetooth");
   let featureSupport = $state<AvailableTransports>({ webBluetooth: false, webSerial: false, capacitorBle: false });
 
@@ -115,132 +123,137 @@
   });
 </script>
 
-<div class="input-group w-auto input-group-sm flex-nowrap justify-content-end">
+<svelte:window onclick={() => settingsOpen = false} />
+
+<div class="flex items-stretch flex-nowrap justify-end w-auto">
   {#if $connectionState === "connected"}
-    <button class="btn btn-secondary" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-      <MdIcon icon="settings" />
-    </button>
-    <div class="dropdown-menu p-1">
-      {#if $printerInfo}
-        <div>
-          Printer info:
-          <ul>
+    <div class="relative" onclick={(e) => e.stopPropagation()}>
+      <button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={() => settingsOpen = !settingsOpen}>
+        <MdIcon icon="settings" />
+      </button>
+      {#if settingsOpen}
+      <div class="absolute z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl top-full mt-1 p-1 text-xs text-zinc-300 right-0" style="width: 100vw; max-width: 300px;">
+        {#if $printerInfo}
+          <button class="block w-full px-3 py-1.5 text-left hover:bg-zinc-700 rounded" onclick={() => printerInfoOpen = !printerInfoOpen}>
+            Printer info <MdIcon icon={printerInfoOpen ? 'expand_less' : 'expand_more'} />
+          </button>
+          {#if printerInfoOpen}
+          <ul class="px-3 pb-2 text-zinc-400">
             {#each Object.entries($printerInfo) as [key, value] (key)}
               <li>{key}: <strong>{value ?? "-"}</strong></li>
             {/each}
           </ul>
-        </div>
-      {/if}
+          {/if}
+        {/if}
 
-      {#if $printerMeta}
-        <button
-          class="btn btn-sm btn-outline-secondary d-block w-100 mt-1"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#modelMeta">
-          Model metadata <MdIcon icon="expand_more" />
-        </button>
+        {#if $printerMeta}
+          <button
+            class="block w-full px-3 py-1.5 text-left hover:bg-zinc-700 rounded mt-1"
+            type="button"
+            onclick={() => modelMetaOpen = !modelMetaOpen}>
+            Model metadata <MdIcon icon={modelMetaOpen ? 'expand_less' : 'expand_more'} />
+          </button>
 
-        <div class="collapse" id="modelMeta">
-          <ul>
+          {#if modelMetaOpen}
+          <ul class="px-3 pb-2 text-zinc-400">
             {#each Object.entries($printerMeta) as [key, value] (key)}
               <li>{key}: <strong>{value ?? "-"}</strong></li>
             {/each}
           </ul>
-        </div>
-      {/if}
+          {/if}
+        {/if}
 
-      {#if $rfidInfo}
-        <button
-          class="btn btn-sm btn-outline-secondary d-block w-100 mt-1"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#rfidInfo">
-          RFID info <MdIcon icon="expand_more" />
-        </button>
+        {#if $rfidInfo}
+          <button
+            class="block w-full px-3 py-1.5 text-left hover:bg-zinc-700 rounded mt-1"
+            type="button"
+            onclick={() => rfidInfoOpen = !rfidInfoOpen}>
+            RFID info <MdIcon icon={rfidInfoOpen ? 'expand_less' : 'expand_more'} />
+          </button>
 
-        <div class="collapse" id="rfidInfo">
-          <button class="btn btn-outline-secondary btn-sm mt-1" onclick={refreshRfidInfo}>Update</button>
+          {#if rfidInfoOpen}
+          <div class="px-3 pb-2">
+            <button class="inline-flex items-center gap-1 px-2 h-7 rounded border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors mt-1" onclick={refreshRfidInfo}>Update</button>
+            <ul class="text-zinc-400">
+              {#each Object.entries($rfidInfo) as [key, value] (key)}
+                <li>{key}: <strong>{value ?? "-"}</strong></li>
+              {/each}
+            </ul>
+          </div>
+          {/if}
+        {/if}
 
-          <ul>
-            {#each Object.entries($rfidInfo) as [key, value] (key)}
-              <li>{key}: <strong>{value ?? "-"}</strong></li>
-            {/each}
-          </ul>
-        </div>
-      {/if}
+        {#if $ribbonRfidInfo}
+          <button
+            class="block w-full px-3 py-1.5 text-left hover:bg-zinc-700 rounded mt-1"
+            type="button"
+            onclick={() => ribbonRfidInfoOpen = !ribbonRfidInfoOpen}>
+            Ribbon RFID info <MdIcon icon={ribbonRfidInfoOpen ? 'expand_less' : 'expand_more'} />
+          </button>
 
-      {#if $ribbonRfidInfo}
-        <button
-          class="btn btn-sm btn-outline-secondary d-block w-100 mt-1"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#ribbonRfidInfo">
-          Ribbon RFID info <MdIcon icon="expand_more" />
-        </button>
+          {#if ribbonRfidInfoOpen}
+          <div class="px-3 pb-2">
+            <button class="inline-flex items-center gap-1 px-2 h-7 rounded border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors mt-1" onclick={refreshRfidInfo}>Update</button>
+            <ul class="text-zinc-400">
+              {#each Object.entries($ribbonRfidInfo) as [key, value] (key)}
+                <li>{key}: <strong>{value ?? "-"}</strong></li>
+              {/each}
+            </ul>
+          </div>
+          {/if}
+        {/if}
 
-        <div class="collapse" id="ribbonRfidInfo">
-          <button class="btn btn-outline-secondary btn-sm mt-1" onclick={refreshRfidInfo}>Update</button>
+        {#if $heartbeatData}
+          <button
+            class="block w-full px-3 py-1.5 text-left hover:bg-zinc-700 rounded mt-1"
+            type="button"
+            onclick={() => heartbeatDataOpen = !heartbeatDataOpen}>
+            Heartbeat data <MdIcon icon={heartbeatDataOpen ? 'expand_less' : 'expand_more'} />
+          </button>
 
-          <ul>
-            {#each Object.entries($ribbonRfidInfo) as [key, value] (key)}
-              <li>{key}: <strong>{value ?? "-"}</strong></li>
-            {/each}
-          </ul>
-        </div>
-      {/if}
-
-      {#if $heartbeatData}
-        <button
-          class="btn btn-sm btn-outline-secondary d-block w-100 mt-1"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#heartbeatData">
-          Heartbeat data <MdIcon icon="expand_more" />
-        </button>
-
-        <div class="collapse" id="heartbeatData">
-          <ul>
+          {#if heartbeatDataOpen}
+          <ul class="px-3 pb-2 text-zinc-400">
             {#each Object.entries($heartbeatData) as [key, value] (key)}
               <li>{key}: <strong>{value ?? "-"}</strong></li>
             {/each}
           </ul>
+          {/if}
+        {/if}
+
+        <FirmwareUpdater />
+
+        <button
+          class="block w-full px-3 py-1.5 text-left hover:bg-zinc-700 rounded mt-1"
+          type="button"
+          onclick={() => testsOpen = !testsOpen}>
+          Tests <MdIcon icon={testsOpen ? 'expand_less' : 'expand_more'} />
+        </button>
+
+        {#if testsOpen}
+        <div class="flex flex-wrap gap-1 mt-1 px-2 pb-2">
+          <button class="inline-flex items-center gap-1 px-2.5 h-7 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors" onclick={startHeartbeat}>Heartbeat on</button>
+          <button class="inline-flex items-center gap-1 px-2.5 h-7 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors" onclick={stopHeartbeat}>Heartbeat off</button>
+          <button class="inline-flex items-center gap-1 px-2.5 h-7 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors" onclick={soundOn}>Sound on</button>
+          <button class="inline-flex items-center gap-1 px-2.5 h-7 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors" onclick={soundOff}>Sound off</button>
+          <button class="inline-flex items-center gap-1 px-2.5 h-7 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors" onclick={fetchInfo}>Fetch info again</button>
+          <button class="inline-flex items-center gap-1 px-2.5 h-7 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors" onclick={reset}>Reset</button>
         </div>
-      {/if}
-
-      <FirmwareUpdater />
-
-      <button
-        class="btn btn-sm btn-outline-secondary d-block w-100 mt-1"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#tests">
-        Tests <MdIcon icon="expand_more" />
-      </button>
-
-      <div class="collapse" id="tests">
-        <div class="d-flex flex-wrap gap-1 mt-1">
-          <button class="btn btn-sm btn-primary" onclick={startHeartbeat}>Heartbeat on</button>
-          <button class="btn btn-sm btn-primary" onclick={stopHeartbeat}>Heartbeat off</button>
-          <button class="btn btn-sm btn-primary" onclick={soundOn}>Sound on</button>
-          <button class="btn btn-sm btn-primary" onclick={soundOff}>Sound off</button>
-          <button class="btn btn-sm btn-primary" onclick={fetchInfo}>Fetch info again</button>
-          <button class="btn btn-sm btn-primary" onclick={reset}>Reset</button>
-        </div>
+        {/if}
       </div>
+      {/if}
     </div>
-    <span class="input-group-text">
+    <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0">
       {#if connectionType === "serial"}
         <MdIcon icon="usb" />
       {:else}
         <MdIcon icon="bluetooth" />
       {/if}
     </span>
-    <span class="input-group-text {$heartbeatFails > 0 ? 'text-warning' : ''}">
+    <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-[11px] shrink-0 {$heartbeatFails > 0 ? 'text-yellow-400' : 'text-zinc-500'}">
       {$printerMeta?.model ?? $connectedPrinterName}
     </span>
     {#if $heartbeatData?.chargeLevel}
-      <span class="input-group-text">
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0">
         <MdIcon icon={batteryIcon($heartbeatData.chargeLevel)} class="r-90"></MdIcon>
       </span>
     {/if}
@@ -248,7 +261,7 @@
     {#if featureSupport.webBluetooth}
       <button
         disabled={$connectionState === "connecting"}
-        class="btn text-nowrap {connectionType === 'bluetooth' ? 'btn-light' : 'btn-outline-secondary'}"
+        class="inline-flex items-center gap-1 px-2 h-7 border border-zinc-700 text-xs transition-colors whitespace-nowrap {connectionType === 'bluetooth' ? 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200' : 'text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
         onclick={() => switchConnectionType("bluetooth")}>
         <MdIcon icon="bluetooth" />
         {$tr("connector.bluetooth")}
@@ -257,7 +270,7 @@
     {#if featureSupport.webSerial}
       <button
         disabled={$connectionState === "connecting"}
-        class="btn text-nowrap {connectionType === 'serial' ? 'btn-light' : 'btn-outline-secondary'}"
+        class="inline-flex items-center gap-1 px-2 h-7 border border-l-0 border-zinc-700 text-xs transition-colors whitespace-nowrap {connectionType === 'serial' ? 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200' : 'text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
         onclick={() => switchConnectionType((connectionType = "serial"))}>
         <MdIcon icon="usb" />
         {$tr("connector.serial")}
@@ -266,7 +279,7 @@
     {#if featureSupport.capacitorBle}
       <button
         disabled={$connectionState === "connecting"}
-        class="btn text-nowrap {connectionType === 'capacitor-ble' ? 'btn-light' : 'btn-outline-secondary'}"
+        class="inline-flex items-center gap-1 px-2 h-7 border border-l-0 border-zinc-700 text-xs transition-colors whitespace-nowrap {connectionType === 'capacitor-ble' ? 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200' : 'text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
         onclick={() => switchConnectionType((connectionType = "capacitor-ble"))}>
         <MdIcon icon="usb" />
         Capacitor BLE
@@ -276,7 +289,7 @@
 
   {#if $connectionState !== "connected"}
     <button
-      class="btn btn-primary"
+      class="inline-flex items-center gap-1 px-2.5 h-7 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors border border-blue-600 rounded-r"
       disabled={$connectionState === "connecting" ||
         (!featureSupport.capacitorBle && !featureSupport.webBluetooth && !featureSupport.webSerial)}
       onclick={onConnectClicked}>
@@ -285,15 +298,8 @@
   {/if}
 
   {#if $connectionState === "connected"}
-    <button class="btn btn-danger" onclick={onDisconnectClicked}>
+    <button class="inline-flex items-center gap-1 px-2 h-7 rounded-r bg-red-700 hover:bg-red-600 text-white text-xs transition-colors" onclick={onDisconnectClicked}>
       <MdIcon icon="power_off" />
     </button>
   {/if}
 </div>
-
-<style>
-  .dropdown-menu {
-    width: 100vw;
-    max-width: 300px;
-  }
-</style>

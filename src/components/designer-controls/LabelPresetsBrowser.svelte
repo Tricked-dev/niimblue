@@ -38,34 +38,35 @@
   };
 </script>
 
-<div class="preset-browser overflow-y-auto border d-flex p-2 gap-1 flex-wrap {className}">
+<div class="overflow-y-auto border border-zinc-800 flex p-2 gap-1 flex-wrap {className}" style="max-height: 200px; max-width: 100%; min-height: 96px;">
   <!-- fixme: key -->
   {#each presets as item, idx (item)}
     <div
       role="button"
-      class="btn p-0 card-wrapper d-flex justify-content-center align-items-center"
+      class="p-0 flex justify-center items-center cursor-pointer"
+      style="width: 96px; height: 96px;"
       tabindex="0"
       onkeydown={() => onItemSelected(idx)}
       onclick={() => onItemSelected(idx)}>
       <div
-        class="card print-start-{item.printDirection} d-flex justify-content-center align-items-center"
-        style="width: {scaleDimensions(item).width}%; height: {scaleDimensions(item).height}%;">
-        <div class="remove d-flex">
+        class="bg-white relative flex justify-center items-center print-start-{item.printDirection}"
+        style="width: {scaleDimensions(item).width}%; height: {scaleDimensions(item).height}%; border-left: {item.printDirection === 'left' ? '2px solid #ff4646' : ''}; border-top: {item.printDirection === 'top' ? '2px solid #ff4646' : ''};">
+        <div class="absolute top-0 right-0 flex">
           {#if deleteIndex === idx}
-            <button class="remove btn text-danger-emphasis" onclick={(e) => deleteConfirmed(e, idx)}>
+            <button class="p-0 leading-none text-red-500" onclick={(e) => deleteConfirmed(e, idx)}>
               <MdIcon icon="delete" />
             </button>
-            <button class="remove btn text-success" onclick={(e) => deleteRejected(e)}>
+            <button class="p-0 leading-none text-green-400" onclick={(e) => deleteRejected(e)}>
               <MdIcon icon="close" />
             </button>
           {:else}
-            <button class="remove btn text-danger-emphasis" onclick={(e) => deleteRequested(e, idx)}>
+            <button class="p-0 leading-none text-red-500" onclick={(e) => deleteRequested(e, idx)}>
               <MdIcon icon="delete" />
             </button>
           {/if}
         </div>
 
-        <span class="label p-1">
+        <span class="p-1 bg-white/80 text-black rounded-lg text-[10px]">
           {#if item.title}
             {item.title}
           {:else}
@@ -78,45 +79,3 @@
     </div>
   {/each}
 </div>
-
-<style>
-  .preset-browser {
-    max-height: 200px;
-    max-width: 100%;
-    min-height: 96px;
-  }
-
-  .card-wrapper {
-    width: 96px;
-    height: 96px;
-  }
-
-  .card {
-    background-color: white;
-    position: relative;
-  }
-
-  .card > .remove {
-    position: absolute;
-    top: 0;
-    right: 0;
-  }
-
-  .card > .remove > button {
-    padding: 0;
-    line-height: 100%;
-  }
-
-  .card > .label {
-    background-color: rgba(255, 255, 255, 0.8);
-    color: black;
-    border-radius: 8px;
-  }
-
-  .card.print-start-left {
-    border-left: 2px solid #ff4646;
-  }
-  .card.print-start-top {
-    border-top: 2px solid #ff4646;
-  }
-</style>

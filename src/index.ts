@@ -1,8 +1,5 @@
-import "$/styles/style.scss";
-import "@popperjs/core";
+import "./app.css";
 import "toastify-js/src/toastify.css";
-import "bootstrap/js/dist/dropdown";
-import "bootstrap/js/dist/collapse";
 import App from "$/App.svelte";
 import { mount } from "svelte";
 import { configureFabric } from "$/defaults";
