@@ -8,6 +8,7 @@
   import PdfImportButton from "$/components/designer-controls/PdfImportButton.svelte";
   import CsvControl from "$/components/designer-controls/CsvControl.svelte";
   import SavedLabelsMenu from "$/components/designer-controls/SavedLabelsMenu.svelte";
+  import { toolButtons } from "$/utils/object_tool_buttons";
 
   interface Props {
     labelProps: LabelProps;
@@ -41,20 +42,6 @@
 
   const btnClass =
     "w-8 h-8 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors";
-
-  const toolButtons: { type: OjectType; icon: MaterialIcon; title: string }[] = [
-    { type: "text", icon: "title", title: "Text" },
-    { type: "barcode", icon: "view_week", title: "Barcode" },
-    { type: "qrcode", icon: "qr_code_2", title: "QR Code" },
-    { type: "datamatrix", icon: "grid_3x3", title: "Datamatrix" },
-    { type: "aruco", icon: "grid_on", title: "ArUco Marker" },
-    { type: "rectangle", icon: "crop_square", title: "Rectangle" },
-    { type: "reverseBox", icon: "invert_colors", title: "Reverse Box" },
-    { type: "bar", icon: "horizontal_rule", title: "Simple Bar" },
-    { type: "circle", icon: "radio_button_unchecked", title: "Circle" },
-    { type: "line", icon: "remove", title: "Line" },
-    { type: "image", icon: "image", title: "Image" },
-  ];
 </script>
 
 <aside class="flex flex-col items-center w-[42px] bg-zinc-950 border-r border-zinc-800 py-1.5 gap-0.5 shrink-0">

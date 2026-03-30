@@ -18,6 +18,7 @@
   interface ProcessedImageData {
     originalBlob: Blob;
     originalUrl: string;
+    originalElement: HTMLImageElement;
     processOptions: {
       method: PostProcessType | "none";
       threshold: number;
@@ -38,7 +39,9 @@
 
   const updateProcessOptions = async (options: Partial<ProcessedImageData["processOptions"]>) => {
     const imgData = getImageData();
-    if (!imgData) return;
+    if (!imgData || !imgData.originalElement || processing) return;
+
+    processing = true;
 
     Object.assign(imgData.processOptions, options);
 
@@ -49,36 +52,42 @@
     if (currentWidth < 1 || currentHeight < 1) return;
 
     try {
-      const element = img.getElement();
-      if (element && element instanceof HTMLImageElement) {
-        const processedCanvas = await processImageElement(element, imgData.processOptions, currentWidth, currentHeight);
+      const processedCanvas = await processImageElement(
+        imgData.originalElement,
+        imgData.processOptions,
+        currentWidth,
+        currentHeight,
+      );
 
-        const newUrl = processedCanvas.toDataURL("image/png");
-        const newImg = await fabric.FabricImage.fromURL(newUrl);
+      const newUrl = processedCanvas.toDataURL("image/png");
+      const newImg = await fabric.FabricImage.fromURL(newUrl);
+      newImg.set({ imageSmoothing: false });
 
-        img.set({
-          width: currentWidth,
-          height: currentHeight,
-          scaleX: 1,
-          scaleY: 1,
-        });
-        img.setElement(newImg.getElement());
+      img.set({
+        width: currentWidth,
+        height: currentHeight,
+        scaleX: 1,
+        scaleY: 1,
+      });
+      img.setElement(newImg.getElement());
 
-        imgData.lastScale = 1;
-        imgData.lastWidth = currentWidth;
-        imgData.lastHeight = currentHeight;
+      imgData.lastScale = 1;
+      imgData.lastWidth = currentWidth;
+      imgData.lastHeight = currentHeight;
 
-        selectedObject.canvas?.requestRenderAll();
-        valueUpdated();
-      }
+      selectedObject.canvas?.requestRenderAll();
+      valueUpdated();
     } catch (e) {
       console.error("Failed to update image:", e);
+    } finally {
+      processing = false;
     }
   };
 
   let currentMethod = $state<PostProcessType | "none">("none");
   let currentThreshold = $state(50);
   let currentContrast = $state(80);
+  let processing = $state(false);
 
   $effect(() => {
     const imgData = getImageData();
@@ -201,7 +210,8 @@
       <span class="text-[10px] text-zinc-500 w-full">Dither</span>
       {#each [["none", "Off"], ["threshold", "Thresh"], ["dither", "Dither"], ["bayer", "Bayer"]] as [val, label] (val)}
         <button
-          class="{b} {currentMethod === val ? bn : bi}"
+          class="{b} {currentMethod === val ? bn : bi} {processing ? 'opacity-50 cursor-not-allowed' : ''}"
+          disabled={processing}
           onclick={() => updateProcessOptions({ method: val as PostProcessType | "none" })}>
           {label}
         </button>
@@ -217,8 +227,9 @@
         min="0"
         max="100"
         bind:value={currentThreshold}
+        disabled={processing}
         onchange={() => updateProcessOptions({ threshold: currentThreshold })}
-        class="w-full h-1.5 bg-zinc-700 rounded appearance-none cursor-pointer" />
+        class="w-full h-1.5 bg-zinc-700 rounded appearance-none cursor-pointer {processing ? 'opacity-50' : ''}" />
     </div>
 
     <div class="mt-1">
@@ -230,8 +241,9 @@
         min="0"
         max="100"
         bind:value={currentContrast}
+        disabled={processing}
         onchange={() => updateProcessOptions({ contrast: currentContrast })}
-        class="w-full h-1.5 bg-zinc-700 rounded appearance-none cursor-pointer" />
+        class="w-full h-1.5 bg-zinc-700 rounded appearance-none cursor-pointer {processing ? 'opacity-50' : ''}" />
     </div>
   {/if}
 {/if}

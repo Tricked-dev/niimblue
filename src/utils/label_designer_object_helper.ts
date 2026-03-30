@@ -49,9 +49,28 @@ export class LabelDesignerObjectHelper {
     ) {
       const url = await FileUtils.blobToDataUrl(file);
       const fabricImg = await fabric.FabricImage.fromURL(url);
-      fabricImg.set({ ...OBJECT_DEFAULTS });
+      fabricImg.set({ ...OBJECT_DEFAULTS, imageSmoothing: false });
       CanvasUtils.fitObjectIntoCanvas(canvas, fabricImg, OBJECT_DEFAULTS.left, OBJECT_DEFAULTS.top);
       canvas.add(fabricImg);
+
+      const originalImg = new Image();
+      originalImg.src = url;
+      await new Promise<void>((resolve) => {
+        originalImg.onload = () => resolve();
+        originalImg.onerror = () => resolve();
+      });
+
+      const imgData: ProcessedImageData = {
+        originalBlob: file,
+        originalUrl: url,
+        originalElement: originalImg,
+        processOptions: { method: "none", threshold: 50, contrast: 80 },
+        lastScale: fabricImg.scaleX ?? 1,
+        lastWidth: Math.round((fabricImg.width ?? 0) * (fabricImg.scaleX ?? 1)),
+        lastHeight: Math.round((fabricImg.height ?? 0) * (fabricImg.scaleY ?? 1)),
+      };
+      (fabricImg as any)._niimImageData = imgData;
+
       return fabricImg;
     }
 
@@ -111,6 +130,7 @@ export class LabelDesignerObjectHelper {
     }
 
     const fabricImg = await fabric.FabricImage.fromURL(finalSrc);
+    fabricImg.set({ imageSmoothing: false });
 
     fabricImg.set({
       left: (canvasWidth - fit.width) / 2,
@@ -153,32 +173,30 @@ export class LabelDesignerObjectHelper {
       if (currentWidth < 1 || currentHeight < 1) return;
 
       try {
-        const element = fabricImg.getElement();
-        if (element && element instanceof HTMLImageElement) {
-          const processedCanvas = await processImageElement(
-            element,
-            imgData.processOptions,
-            currentWidth,
-            currentHeight,
-          );
+        const processedCanvas = await processImageElement(
+          imgData.originalElement,
+          imgData.processOptions,
+          currentWidth,
+          currentHeight,
+        );
 
-          const newUrl = processedCanvas.toDataURL("image/png");
-          const newImg = await fabric.FabricImage.fromURL(newUrl);
+        const newUrl = processedCanvas.toDataURL("image/png");
+        const newImg = await fabric.FabricImage.fromURL(newUrl);
+        newImg.set({ imageSmoothing: false });
 
-          fabricImg.set({
-            width: currentWidth,
-            height: currentHeight,
-            scaleX: 1,
-            scaleY: 1,
-          });
-          fabricImg.setElement(newImg.getElement());
+        fabricImg.set({
+          width: currentWidth,
+          height: currentHeight,
+          scaleX: 1,
+          scaleY: 1,
+        });
+        fabricImg.setElement(newImg.getElement());
 
-          imgData.lastScale = 1;
-          imgData.lastWidth = currentWidth;
-          imgData.lastHeight = currentHeight;
+        imgData.lastScale = 1;
+        imgData.lastWidth = currentWidth;
+        imgData.lastHeight = currentHeight;
 
-          canvas.requestRenderAll();
-        }
+        canvas.requestRenderAll();
       } catch (e) {
         console.error("Failed to reprocess image:", e);
       }

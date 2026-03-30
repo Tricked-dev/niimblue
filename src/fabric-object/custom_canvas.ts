@@ -479,7 +479,7 @@ export class CustomCanvas extends fabric.Canvas {
     if (this.gridEnabled && this.gridSize > 0) {
       ctx.save();
       ctx.strokeStyle = "rgba(0, 0, 200, 0.15)";
-      ctx.lineWidth = 0.5;
+      ctx.lineWidth = 0.25;
       ctx.setLineDash([]);
       // Vertical lines
       for (let x = bb.startX; x <= bb.endX; x += this.gridSize) {

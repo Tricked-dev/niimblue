@@ -5,6 +5,9 @@
   import { ArUcoMarker } from "$/fabric-object/aruco";
   import { Datamatrix } from "$/fabric-object/datamatrix";
   import { connectionState, appConfig } from "$/stores";
+  import { locale, locales } from "$/utils/i18n";
+  import type { OjectType } from "$/types";
+  import type { MaterialIcon } from "$/styles/mdi_icons";
   import TextParamsControls from "$/components/designer-controls/TextParamsControls.svelte";
   import BarcodeParamsControls from "$/components/designer-controls/BarcodeParamsControls.svelte";
   import QRCodeParamsControls from "$/components/designer-controls/QRCodeParamsControls.svelte";
@@ -14,6 +17,8 @@
   import GenericObjectParamsControls from "$/components/designer-controls/GenericObjectParamsControls.svelte";
   import VariableInsertControl from "$/components/designer-controls/VariableInsertControl.svelte";
   import PrinterConnector from "$/components/PrinterConnector.svelte";
+  import MdIcon from "$/components/basic/MdIcon.svelte";
+  import { toolButtons } from "$/utils/object_tool_buttons";
 
   interface Props {
     canvas: fabric.Canvas | undefined;
@@ -23,6 +28,7 @@
     onValueUpdated: () => void;
     onDeleteSelected: () => void;
     onCloneSelected: () => void;
+    onObjectPicked?: (type: OjectType) => void;
     sheet?: boolean;
   }
 
@@ -34,6 +40,7 @@
     onValueUpdated,
     onDeleteSelected,
     onCloneSelected,
+    onObjectPicked,
     sheet = false,
   }: Props = $props();
 
@@ -55,6 +62,9 @@
   const cloneButtonClass =
     "w-6 h-6 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors";
 
+  const addBtnClass =
+    "flex flex-col items-center justify-center flex-1 h-14 rounded-lg bg-zinc-800 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 transition-colors";
+
   const objectSectionTitle = $derived(
     hasText
       ? "Text"
@@ -70,11 +80,11 @@
   );
 
   // Mobile sheet state
-  let sheetExpanded = $state(false);
-  let activeTab = $state<"object" | "position" | "printer">("object");
+  let sheetExpanded = $state(true);
+  let activeTab = $state<"add" | "object" | "position" | "printer" | "language">("add");
 
   $effect(() => {
-    if (selectedObject) sheetExpanded = true;
+    if (selectedObject) activeTab = "object";
   });
 </script>
 
@@ -256,7 +266,7 @@
       onclick={() => (sheetExpanded = !sheetExpanded)}>
       <div class="absolute left-1/2 -translate-x-1/2 top-1.5 w-8 h-1 rounded-full bg-zinc-700"></div>
       {#if sheetExpanded}
-        {#each ["object", "position", "printer"] as const as tab}
+        {#each ["add", "object", "position", "printer", "language"] as const as tab}
           <button
             class="px-3 h-full text-xs border-b-2 transition-colors z-10 {activeTab === tab
               ? 'border-blue-500 text-zinc-100'
@@ -265,7 +275,16 @@
               e.stopPropagation();
               activeTab = tab;
               sheetExpanded = true;
-            }}>{tab === "object" ? "Object" : tab === "position" ? "Position" : "Printer"}</button>
+            }}
+            >{tab === "add"
+              ? "Add"
+              : tab === "object"
+                ? "Object"
+                : tab === "position"
+                  ? "Position"
+                  : tab === "printer"
+                    ? "Printer"
+                    : "Language"}</button>
         {/each}
       {:else}
         <span class="text-[10px] text-zinc-500 ml-auto">
@@ -277,7 +296,22 @@
     <!-- Tab content -->
     {#if sheetExpanded}
       <div class="overflow-y-auto p-3" style="height: calc(50vh - 36px)">
-        {#if activeTab === "object"}
+        {#if activeTab === "add"}
+          <div class="grid grid-cols-4 gap-1 px-1">
+            {#each toolButtons as { type, icon, title } (type)}
+              <button
+                class={addBtnClass}
+                {title}
+                onclick={() => {
+                  onObjectPicked?.(type);
+                  sheetExpanded = false;
+                }}>
+                <MdIcon {icon} class="text-lg mb-0.5" />
+                <span class="text-[9px]">{title}</span>
+              </button>
+            {/each}
+          </div>
+        {:else if activeTab === "object"}
           {#if selectedCount > 0}
             <div class="flex items-center justify-between mb-2">
               <span class="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{objectSectionTitle}</span>
@@ -325,8 +359,19 @@
           {:else}
             <p class="text-xs text-zinc-500">Select an object to edit its position</p>
           {/if}
-        {:else}
+        {:else if activeTab === "printer"}
           <PrinterConnector />
+        {:else if activeTab === "language"}
+          <div class="flex flex-col gap-3">
+            <div class="text-xs text-zinc-400">Select language</div>
+            <select
+              class="w-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm rounded px-3 py-2 hover:border-zinc-500 transition-colors focus:outline-none focus:border-zinc-500"
+              bind:value={$locale}>
+              {#each Object.entries(locales) as [key, name] (key)}
+                <option value={key}>{name}</option>
+              {/each}
+            </select>
+          </div>
         {/if}
       </div>
     {/if}

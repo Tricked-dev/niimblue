@@ -17,7 +17,10 @@
 
   const RULER_SIZE = 18;
 
-  interface Highlight { start: number; end: number }
+  interface Highlight {
+    start: number;
+    end: number;
+  }
 
   interface Props {
     canvas: CustomCanvas | undefined;
@@ -59,11 +62,26 @@
     undoState,
     csvEnabled = $bindable(false),
     children,
-    onUndo, onRedo, onClear, onPreview, onPrint, onSave, onOpen,
-    onObjectPicked, onIconPicked, onSvgIconPicked, onZplImageReady, onPdfImageReady,
-    onRequestLabelTemplate, onLoadRequested, onCsvPlaceholderPicked,
+    onUndo,
+    onRedo,
+    onClear,
+    onPreview,
+    onPrint,
+    onSave,
+    onOpen,
+    onObjectPicked,
+    onIconPicked,
+    onSvgIconPicked,
+    onZplImageReady,
+    onPdfImageReady,
+    onRequestLabelTemplate,
+    onLoadRequested,
+    onCsvPlaceholderPicked,
     onLabelSettingsOpen,
-    onValueUpdated, onLabelPropsChange, onDeleteSelected, onCloneSelected,
+    onValueUpdated,
+    onLabelPropsChange,
+    onDeleteSelected,
+    onCloneSelected,
   }: Props = $props();
 
   const CANVAS_PADDING = 3000;
@@ -96,7 +114,9 @@
 
   $effect(() => {
     if (!canvas) return;
-    const update = () => { moveRevision++; };
+    const update = () => {
+      moveRevision++;
+    };
     canvas.on("object:moving" as any, update);
     canvas.on("object:scaling" as any, update);
     canvas.on("object:rotating" as any, update);
@@ -109,9 +129,13 @@
 
   $effect(() => {
     if (!canvas) return;
-    const handler = (e: any) => { zoom = e.zoom; };
+    const handler = (e: any) => {
+      zoom = e.zoom;
+    };
     canvas.on("viewport:changed" as any, handler);
-    return () => { canvas.off("viewport:changed" as any, handler); };
+    return () => {
+      canvas.off("viewport:changed" as any, handler);
+    };
   });
 
   // Compute ruler selection highlight
@@ -139,11 +163,11 @@
 
     hlH = {
       start: canvasOffsetX + br.left * zoom,
-      end:   canvasOffsetX + (br.left + br.width) * zoom,
+      end: canvasOffsetX + (br.left + br.width) * zoom,
     };
     hlV = {
       start: canvasOffsetY + br.top * zoom,
-      end:   canvasOffsetY + (br.top + br.height) * zoom,
+      end: canvasOffsetY + (br.top + br.height) * zoom,
     };
   });
 
@@ -167,6 +191,7 @@
 
   // Settings button in rail opens label settings
   const openLabelSettings = () => {
+    if (canvas && canvas.getActiveObject()) return;
     labelSettingsOpen = true;
     labelSettingsPos = null; // centered modal mode
     onLabelSettingsOpen();
@@ -191,37 +216,58 @@
 </script>
 
 <!-- Close label settings on outside click -->
-<svelte:window onclick={() => { if (labelSettingsOpen) closeLabelSettings(); }} />
+<svelte:window
+  onclick={() => {
+    if (labelSettingsOpen) closeLabelSettings();
+  }} />
 
 <div class="flex flex-col h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100">
-  <DesignerTopBar
-    {undoState} {onUndo} {onRedo} {onClear} {onPreview} {onPrint} {onSave} {onOpen}
-  />
+  <DesignerTopBar {undoState} {onUndo} {onRedo} {onClear} {onPreview} {onPrint} {onSave} {onOpen} />
 
   <div class="flex flex-1 overflow-hidden min-h-0">
     <!-- Left tool rail (desktop only) -->
     {#if !isMobile}
       <DesignerRail
-        {labelProps} {canvas}
+        {labelProps}
+        {canvas}
         bind:csvEnabled
-        {onObjectPicked} {onIconPicked} {onSvgIconPicked}
-        {onZplImageReady} {onPdfImageReady}
-        {onRequestLabelTemplate} {onLoadRequested} {onCsvPlaceholderPicked}
-        onLabelSettingsOpen={openLabelSettings}
-      />
+        {onObjectPicked}
+        {onIconPicked}
+        {onSvgIconPicked}
+        {onZplImageReady}
+        {onPdfImageReady}
+        {onRequestLabelTemplate}
+        {onLoadRequested}
+        {onCsvPlaceholderPicked}
+        onLabelSettingsOpen={openLabelSettings} />
     {/if}
 
     <!-- Canvas area -->
     <div class="flex flex-col flex-1 overflow-hidden relative min-w-0">
       <!-- Ruler row: corner + horizontal ruler -->
       <div class="flex shrink-0">
-        <div style="width:{RULER_SIZE}px;height:{RULER_SIZE}px" class="bg-[#1e1e2e] border-b border-r border-[#313244] shrink-0"></div>
-        <CanvasRuler {zoom} scrollOffset={scrollX} dpmm={$labelDpmm} length={areaWidth} axis="horizontal" highlight={hlH} />
+        <div
+          style="width:{RULER_SIZE}px;height:{RULER_SIZE}px"
+          class="bg-[#1e1e2e] border-b border-r border-[#313244] shrink-0">
+        </div>
+        <CanvasRuler
+          {zoom}
+          scrollOffset={scrollX}
+          dpmm={$labelDpmm}
+          length={areaWidth}
+          axis="horizontal"
+          highlight={hlH} />
       </div>
 
       <!-- Vertical ruler + scrollable canvas -->
       <div class="flex flex-1 overflow-hidden min-h-0">
-        <CanvasRuler {zoom} scrollOffset={scrollY} dpmm={$labelDpmm} length={areaHeight} axis="vertical" highlight={hlV} />
+        <CanvasRuler
+          {zoom}
+          scrollOffset={scrollY}
+          dpmm={$labelDpmm}
+          length={areaHeight}
+          axis="vertical"
+          highlight={hlV} />
 
         <!-- Scroll wrapper -->
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -231,9 +277,10 @@
           role="region"
           onscroll={handleScroll}
           oncontextmenu={handleContextMenu}
-          ondblclick={openLabelSettings}
-        >
-          <div class="flex items-center justify-center" style="min-width:100%;min-height:100%;padding:{CANVAS_PADDING}px;">
+          ondblclick={openLabelSettings}>
+          <div
+            class="flex items-center justify-center"
+            style="min-width:100%;min-height:100%;padding:{CANVAS_PADDING}px;">
             {@render children?.()}
           </div>
         </div>
@@ -248,9 +295,11 @@
               class="absolute bottom-full mb-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl overflow-hidden"
               style="width:200px; max-height:40vh;"
               onclick={(e) => e.stopPropagation()}
-              role="presentation"
-            >
-              <div class="px-3 py-1.5 border-b border-zinc-800 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Layers</div>
+              role="presentation">
+              <div
+                class="px-3 py-1.5 border-b border-zinc-800 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                Layers
+              </div>
               <div class="overflow-y-auto" style="max-height:calc(40vh - 32px)">
                 <DesignerLayers {canvas} revision={editRevision} />
               </div>
@@ -258,8 +307,10 @@
           {/if}
           <button
             class="flex items-center gap-1 px-2 h-7 bg-zinc-900/90 backdrop-blur-sm border border-zinc-700 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 text-xs transition-colors"
-            onclick={(e) => { e.stopPropagation(); layersOpen = !layersOpen; }}
-          >
+            onclick={(e) => {
+              e.stopPropagation();
+              layersOpen = !layersOpen;
+            }}>
             <MdIcon icon="layers" />
             <span class="text-[10px]">Layers</span>
             <MdIcon icon={layersOpen ? "expand_more" : "expand_less"} />
@@ -279,8 +330,7 @@
         {editRevision}
         {onValueUpdated}
         {onDeleteSelected}
-        {onCloneSelected}
-      />
+        {onCloneSelected} />
     {/if}
   </div>
 
@@ -294,32 +344,37 @@
       {onValueUpdated}
       {onDeleteSelected}
       {onCloneSelected}
-      sheet={true}
-    />
+      {onObjectPicked}
+      sheet={true} />
   {/if}
 </div>
 
 <!-- Label settings floating panel (right-click or settings button) -->
 {#if labelSettingsOpen}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div
-    class="fixed inset-0 z-50 flex items-center justify-center"
-    onclick={closeLabelSettings}
-  >
+  <div class="fixed inset-0 z-50 flex items-center justify-center" onclick={closeLabelSettings}>
     <div
-      class="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl flex flex-col"
-      style="max-height:90vh; width:min(95vw,480px); {labelSettingsPos ? `position:fixed;left:${Math.min(labelSettingsPos.x, window.innerWidth - 500)}px;top:${Math.min(labelSettingsPos.y, window.innerHeight - 400)}px;` : ''}"
+      class="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl flex flex-col max-sm:h-[80vh] max-sm:w-[95vw] max-sm:max-w-[95vw]"
+      style="max-height:90vh; width:min(95vw,480px); {labelSettingsPos
+        ? `position:fixed;left:${Math.min(labelSettingsPos.x, window.innerWidth - 500)}px;top:${Math.min(labelSettingsPos.y, window.innerHeight - 400)}px;`
+        : ''}"
       onclick={(e) => e.stopPropagation()}
-      role="presentation"
-    >
+      role="presentation">
       <div class="flex items-center justify-between px-4 py-2 border-b border-zinc-800 shrink-0">
         <span class="text-sm font-semibold text-zinc-200">Label Settings</span>
-        <button class="w-6 h-6 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors" onclick={closeLabelSettings}>
+        <button
+          class="w-6 h-6 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+          onclick={closeLabelSettings}>
           <MdIcon icon="close" />
         </button>
       </div>
       <div class="overflow-y-auto py-3">
-        <LabelPropsEditor {labelProps} onChange={(p) => { onLabelPropsChange(p); closeLabelSettings(); }} />
+        <LabelPropsEditor
+          {labelProps}
+          onChange={(p) => {
+            onLabelPropsChange(p);
+            closeLabelSettings();
+          }} />
       </div>
     </div>
   </div>
