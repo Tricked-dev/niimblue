@@ -125,7 +125,7 @@
     }
 
     onLoadRequested(label);
-    new Dropdown(dropdownRef).hide();
+    open = false;
   };
 
   const onImportClicked = async () => {

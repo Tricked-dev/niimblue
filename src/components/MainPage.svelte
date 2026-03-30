@@ -2,9 +2,12 @@
   import { Utils } from "@mmote/niimbluelib";
   import BrowserWarning from "$/components/basic/BrowserWarning.svelte";
   import LabelDesigner from "$/components/LabelDesigner.svelte";
+  import StartScreen from "$/components/StartScreen.svelte";
   import { locale, locales, tr } from "$/utils/i18n";
   import DebugStuff from "$/components/DebugStuff.svelte";
   import MdIcon from "$/components/basic/MdIcon.svelte";
+  import { type LabelPreset, type ExportedLabelTemplate } from "$/types";
+  import { onMount } from "svelte";
 
   // eslint-disable-next-line no-undef
   const appCommit = __APP_COMMIT__;
@@ -13,10 +16,43 @@
 
   let isStandalone = Utils.getAvailableTransports().capacitorBle || "__TAURI__" in window;
   let debugStuffShow = $state<boolean>(false);
+
+  let currentHash = $state<string>(window.location.hash);
+  let initialPreset = $state<LabelPreset | undefined>(undefined);
+  let initialLabel = $state<ExportedLabelTemplate | undefined>(undefined);
+
+  const isEditor = $derived(currentHash === "#/editor");
+
+  const onHashChange = () => {
+    currentHash = window.location.hash;
+  };
+
+  const onStart = (preset?: LabelPreset) => {
+    initialPreset = preset;
+    initialLabel = undefined;
+    window.location.hash = "#/editor";
+  };
+
+  const onLoadLabel = (label: ExportedLabelTemplate) => {
+    initialLabel = label;
+    initialPreset = undefined;
+    window.location.hash = "#/editor";
+  };
+
+  onMount(() => {
+    window.addEventListener("hashchange", onHashChange);
+    return () => {
+      window.removeEventListener("hashchange", onHashChange);
+    };
+  });
 </script>
 
-<!-- Full-viewport label designer -->
-<LabelDesigner />
+<!-- Full-viewport content -->
+{#if isEditor}
+  <LabelDesigner {initialPreset} {initialLabel} />
+{:else}
+  <StartScreen {onStart} {onLoadLabel} />
+{/if}
 
 <!-- Browser compatibility warning — overlaid top-center -->
 <BrowserWarning />

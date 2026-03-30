@@ -1,6 +1,5 @@
 <script lang="ts">
   import * as fabric from "fabric";
-  import type { LabelProps } from "$/types";
   import { Barcode } from "$/fabric-object/barcode";
   import { QRCode } from "$/fabric-object/qrcode";
   import { ArUcoMarker } from "$/fabric-object/aruco";
@@ -12,28 +11,25 @@
   import VectorParamsControls from "$/components/designer-controls/VectorParamsControls.svelte";
   import GenericObjectParamsControls from "$/components/designer-controls/GenericObjectParamsControls.svelte";
   import VariableInsertControl from "$/components/designer-controls/VariableInsertControl.svelte";
-  import LabelPropsEditor from "$/components/designer-controls/LabelPropsEditor.svelte";
   import PrinterConnector from "$/components/PrinterConnector.svelte";
 
   interface Props {
+    canvas: fabric.Canvas | undefined;
     selectedObject: fabric.FabricObject | undefined;
     selectedCount: number;
     editRevision: number;
-    labelProps: LabelProps;
     onValueUpdated: () => void;
-    onLabelPropsChange: (props: LabelProps) => void;
     onDeleteSelected: () => void;
     onCloneSelected: () => void;
     sheet?: boolean;
   }
 
   let {
+    canvas,
     selectedObject,
     selectedCount,
     editRevision,
-    labelProps,
     onValueUpdated,
-    onLabelPropsChange,
     onDeleteSelected,
     onCloneSelected,
     sheet = false,
@@ -63,7 +59,7 @@
 
   // Mobile sheet state
   let sheetExpanded = $state(false);
-  let activeTab = $state<"object" | "position" | "label" | "printer">("object");
+  let activeTab = $state<"object" | "position" | "printer">("object");
 
   $effect(() => {
     if (selectedObject) sheetExpanded = true;
@@ -112,15 +108,6 @@
 
       <section class="border-b border-zinc-800">
         <div class={sectionHeaderClass}>
-          <span>Label</span>
-        </div>
-        <div class="px-3 pb-3 flex flex-col gap-2">
-          <LabelPropsEditor {labelProps} onChange={onLabelPropsChange} />
-        </div>
-      </section>
-
-      <section class="border-b border-zinc-800">
-        <div class={sectionHeaderClass}>
           <span>Printer</span>
           {#if $connectionState === "connected"}
             <span class="text-[9px] font-medium bg-green-900 text-green-300 px-1.5 py-0.5 rounded-full">Connected</span>
@@ -146,11 +133,11 @@
       onclick={() => sheetExpanded = !sheetExpanded}>
       <div class="absolute left-1/2 -translate-x-1/2 top-1.5 w-8 h-1 rounded-full bg-zinc-700"></div>
       {#if sheetExpanded}
-        {#each (["object", "position", "label", "printer"] as const) as tab}
+        {#each (["object", "position", "printer"] as const) as tab}
           <button
             class="px-3 h-full text-xs border-b-2 transition-colors z-10 {activeTab === tab ? 'border-blue-500 text-zinc-100' : 'border-transparent text-zinc-500 hover:text-zinc-300'}"
             onclick={(e) => { e.stopPropagation(); activeTab = tab; sheetExpanded = true; }}
-          >{tab === "object" ? "Object" : tab === "position" ? "Position" : tab === "label" ? "Label" : "Printer"}</button>
+          >{tab === "object" ? "Object" : tab === "position" ? "Position" : "Printer"}</button>
         {/each}
       {:else}
         <span class="text-[10px] text-zinc-500 ml-auto">
@@ -192,8 +179,6 @@
           {:else}
             <p class="text-xs text-zinc-500">Select an object to edit its position</p>
           {/if}
-        {:else if activeTab === "label"}
-          <LabelPropsEditor {labelProps} onChange={onLabelPropsChange} />
         {:else}
           <PrinterConnector />
         {/if}

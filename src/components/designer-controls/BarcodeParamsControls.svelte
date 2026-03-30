@@ -14,18 +14,15 @@
 
 <input type="hidden" value={editRevision}>
 
-<div class="flex items-stretch flex-nowrap" style="width: fit-content">
-  <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.barcode.encoding")}><MdIcon icon="code" /></span>
-  <select
-    class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
-    value={selectedBarcode.encoding}
-    onchange={(e) => {
-      selectedBarcode?.set("encoding", e.currentTarget.value ?? "EAN13");
-      valueUpdated();
-    }}>
-    <option value="EAN13">EAN13</option>
-    <option value="CODE128B">Code128 B</option>
-  </select>
+<div class="flex gap-1 flex-wrap">
+  {#each [["EAN13", "EAN13"], ["CODE128B", "Code128 B"]] as [val, label] (val)}
+    <button
+      class="inline-flex items-center justify-center px-2 h-7 rounded border text-xs transition-colors {selectedBarcode.encoding === val ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
+      title={$tr("params.barcode.encoding")}
+      onclick={() => { selectedBarcode?.set("encoding", val); valueUpdated(); }}>
+      {label}
+    </button>
+  {/each}
 </div>
 
 <div class="flex items-stretch flex-nowrap" style="width: fit-content">

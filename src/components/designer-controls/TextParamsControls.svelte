@@ -17,8 +17,8 @@
 
   let { selectedText, editRevision, valueUpdated }: Props = $props();
 
-  let sizeMin: number = 1;
-  let sizeMax: number = 999;
+  const sizeMin = 1;
+  const sizeMax = 999;
 
   const setXAlign = (align: fabric.TOriginX) => {
     selectedText.set({ textAlign: align });
@@ -26,28 +26,20 @@
   };
 
   const setYAlign = (align: fabric.TOriginY) => {
-    // change object origin, but keep position
     const pos = selectedText.getPointByOrigin("left", "top");
     selectedText.set({ originY: align });
     selectedText.setPositionByOrigin(pos, "left", "top");
+    vAlignOpen = false;
     valueUpdated();
   };
 
   const toggleBold = () => {
-    if (selectedText.fontWeight === "bold") {
-      selectedText.fontWeight = "normal";
-    } else {
-      selectedText.fontWeight = "bold";
-    }
+    selectedText.fontWeight = selectedText.fontWeight === "bold" ? "normal" : "bold";
     valueUpdated();
   };
 
   const toggleItalic = () => {
-    if (selectedText.fontStyle === "italic") {
-      selectedText.fontStyle = "normal";
-    } else {
-      selectedText.fontStyle = "italic";
-    }
+    selectedText.fontStyle = selectedText.fontStyle === "italic" ? "normal" : "italic";
     valueUpdated();
   };
 
@@ -55,11 +47,6 @@
     if (selectedText instanceof TextboxExt) {
       selectedText.set({ fontAutoSize: !selectedText.fontAutoSize });
     }
-    valueUpdated();
-  };
-
-  const updateFontFamily = (v: string) => {
-    selectedText.set({ fontFamily: v });
     valueUpdated();
   };
 
@@ -75,15 +62,14 @@
     valueUpdated();
   };
 
-  const lineHeightChange = (v: number) => {
-    v = isNaN(v) ? 1 : v;
-    selectedText.set({ lineHeight: v });
-    valueUpdated();
-  };
-
   const fontSizeChange = (v: number) => {
     v = isNaN(v) ? 1 : Math.min(Math.max(v, sizeMin), sizeMax);
     selectedText.set({ fontSize: v });
+    valueUpdated();
+  };
+
+  const lineHeightChange = (v: number) => {
+    selectedText.set({ lineHeight: isNaN(v) ? 1 : v });
     valueUpdated();
   };
 
@@ -92,190 +78,137 @@
     valueUpdated();
   };
 
-  const splitChanged = (value: string) => {
-    if (selectedText instanceof fabric.Textbox) {
-      selectedText.set({ splitByGrapheme: value === "grapheme" });
-      valueUpdated();
-    }
-  };
-
   const backgroundColorChanged = (value: string) => {
     selectedText.set({ backgroundColor: value });
     valueUpdated();
   };
 
-  const editInPopup = () => {
-    const text = prompt($tr("params.text.edit.title"), selectedText.text);
-    if (text !== null) {
-      selectedText.set({ text });
-      selectedText.isEditing = false;
+  const splitChanged = (value: string) => {
+    if (selectedText instanceof fabric.Textbox) {
+      selectedText.set({ splitByGrapheme: value === "grapheme" });
+      splitOpen = false;
       valueUpdated();
     }
   };
+
+  const updateFontFamily = (v: string) => {
+    selectedText.set({ fontFamily: v });
+    valueUpdated();
+  };
+
+  const b = "inline-flex items-center justify-center px-2 h-7 rounded border text-xs transition-colors";
+  const on = "bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300";
+  const off = "border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500";
 </script>
 
 <svelte:window onclick={() => { vAlignOpen = false; colorOpen = false; splitOpen = false; }} />
-
-<!-- Fix component not updating when selectedText changes. I didn't find a better way to do this. -->
 <input type="hidden" value={editRevision}>
 
-<button
-  title={$tr("params.text.align.left")}
-  class="inline-flex items-center gap-1 px-2 h-7 rounded border text-xs transition-colors {selectedText.textAlign === 'left' ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
-  onclick={() => setXAlign("left")}><MdIcon icon="format_align_left" /></button>
-<button
-  title={$tr("params.text.align.center")}
-  class="inline-flex items-center gap-1 px-2 h-7 rounded border text-xs transition-colors {selectedText.textAlign === 'center' ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
-  onclick={() => setXAlign("center")}><MdIcon icon="format_align_center" /></button>
-<button
-  title={$tr("params.text.align.right")}
-  class="inline-flex items-center gap-1 px-2 h-7 rounded border text-xs transition-colors {selectedText.textAlign === 'right' ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
-  onclick={() => setXAlign("right")}><MdIcon icon="format_align_right" /></button>
+<div class="flex flex-col gap-2">
 
-<div class="relative" onclick={(e) => e.stopPropagation()}>
-  <button class="inline-flex items-center gap-1 px-2 h-7 rounded border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors" type="button" onclick={() => vAlignOpen = !vAlignOpen} title={$tr("params.text.vorigin")}>
-    {#if selectedText.originY === "top"}
-      <MdIcon icon="vertical_align_top" />
-    {:else if selectedText.originY === "center"}
-      <MdIcon icon="vertical_align_center" />
-    {:else if selectedText.originY === "bottom"}
-      <MdIcon icon="vertical_align_bottom" />
-    {/if}
-  </button>
-  {#if vAlignOpen}
-  <div class="absolute z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl top-full mt-1 p-2 flex gap-1">
-    <button
-      class="inline-flex items-center gap-1 px-2 h-7 rounded border text-xs transition-colors {selectedText.originY === 'top' ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
-      onclick={() => setYAlign("top")}
-      title={$tr("params.text.vorigin.top")}>
-      <MdIcon icon="vertical_align_top" />
-    </button>
-    <button
-      class="inline-flex items-center gap-1 px-2 h-7 rounded border text-xs transition-colors {selectedText.originY === 'center' ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
-      onclick={() => setYAlign("center")}
-      title={$tr("params.text.vorigin.center")}>
-      <MdIcon icon="vertical_align_center" />
-    </button>
-    <button
-      class="inline-flex items-center gap-1 px-2 h-7 rounded border text-xs transition-colors {selectedText.originY === 'bottom' ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
-      onclick={() => setYAlign("bottom")}
-      title={$tr("params.text.vorigin.bottom")}>
-      <MdIcon icon="vertical_align_bottom" />
-    </button>
-  </div>
-  {/if}
-</div>
+  <!-- Row 1: X-align, Y-align popup, Bold, Italic -->
+  <div class="flex flex-wrap gap-1">
+    <button title={$tr("params.text.align.left")}   class="{b} {selectedText.textAlign === 'left'   ? on : off}" onclick={() => setXAlign("left")}><MdIcon icon="format_align_left" /></button>
+    <button title={$tr("params.text.align.center")} class="{b} {selectedText.textAlign === 'center' ? on : off}" onclick={() => setXAlign("center")}><MdIcon icon="format_align_center" /></button>
+    <button title={$tr("params.text.align.right")}  class="{b} {selectedText.textAlign === 'right'  ? on : off}" onclick={() => setXAlign("right")}><MdIcon icon="format_align_right" /></button>
 
-<button
-  class="inline-flex items-center gap-1 px-2 h-7 rounded border text-xs transition-colors {selectedText.fontWeight === 'bold' ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
-  title={$tr("params.text.bold")}
-  onclick={toggleBold}>
-  <MdIcon icon="format_bold" />
-</button>
-
-<button
-  class="inline-flex items-center gap-1 px-2 h-7 rounded border text-xs transition-colors {selectedText.fontStyle === 'italic' ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
-  title={$tr("params.text.italic")}
-  onclick={toggleItalic}>
-  <MdIcon icon="format_italic" />
-</button>
-
-<div class="relative" onclick={(e) => e.stopPropagation()}>
-  <button class="inline-flex items-center gap-1 px-2 h-7 rounded border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors" type="button" onclick={() => colorOpen = !colorOpen} title={$tr("params.color")}>
-    <MdIcon icon="format_color_fill" />
-  </button>
-  {#if colorOpen}
-  <div class="absolute z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl top-full mt-1 p-2 flex flex-col gap-2">
-    <div class="flex items-stretch flex-nowrap" style="width: 12em">
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">
-        <MdIcon icon="format_color_text" />
-      </span>
-      <select class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1" value={selectedText.fill} onchange={(e) => fillChanged(e.currentTarget.value)}>
-        <option value="white">{$tr("params.color.white")}</option>
-        <option value="black">{$tr("params.color.black")}</option>
-      </select>
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+    <div class="relative" onclick={(e) => e.stopPropagation()}>
+      <button class="{b} {off}" type="button" onclick={() => vAlignOpen = !vAlignOpen} title={$tr("params.text.vorigin")}>
+        {#if selectedText.originY === "top"}<MdIcon icon="vertical_align_top" />
+        {:else if selectedText.originY === "center"}<MdIcon icon="vertical_align_center" />
+        {:else}<MdIcon icon="vertical_align_bottom" />{/if}
+      </button>
+      {#if vAlignOpen}
+        <div class="absolute z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl top-full mt-1 p-1.5 flex gap-1">
+          <button class="{b} {selectedText.originY === 'top'    ? on : off}" onclick={() => setYAlign("top")}    title={$tr("params.text.vorigin.top")}><MdIcon icon="vertical_align_top" /></button>
+          <button class="{b} {selectedText.originY === 'center' ? on : off}" onclick={() => setYAlign("center")} title={$tr("params.text.vorigin.center")}><MdIcon icon="vertical_align_center" /></button>
+          <button class="{b} {selectedText.originY === 'bottom' ? on : off}" onclick={() => setYAlign("bottom")} title={$tr("params.text.vorigin.bottom")}><MdIcon icon="vertical_align_bottom" /></button>
+        </div>
+      {/if}
     </div>
-    <div class="flex items-stretch flex-nowrap" style="width: 12em">
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">
-        <MdIcon icon="format_color_fill" />
-      </span>
-      <select
-        class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1"
-        value={selectedText.backgroundColor || "transparent"}
-        onchange={(e) => backgroundColorChanged(e.currentTarget.value)}>
-        <option value="white">{$tr("params.color.white")}</option>
-        <option value="black">{$tr("params.color.black")}</option>
-        <option value="transparent">{$tr("params.color.transparent")}</option>
-      </select>
-    </div>
-  </div>
-  {/if}
-</div>
 
-{#if selectedText instanceof fabric.Textbox}
-  <div class="relative" onclick={(e) => e.stopPropagation()}>
-    <button class="inline-flex items-center gap-1 px-2 h-7 rounded border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-xs transition-colors" type="button" onclick={() => splitOpen = !splitOpen} title={$tr("params.params.text.split")}>
-      <MdIcon icon="wrap_text" />
-    </button>
-    {#if splitOpen}
-    <div class="absolute z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl top-full mt-1 p-2">
-      <div class="flex items-stretch flex-nowrap" style="width: 14em">
-        <select class="bg-zinc-800 border border-zinc-700 rounded px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 w-full" value={selectedText.splitByGrapheme ? "grapheme" : "space"} onchange={(e) => splitChanged(e.currentTarget.value)}>
-          <option value="space">{$tr("params.params.text.split.spaces")}</option>
-          <option value="grapheme">{$tr("params.params.text.split.grapheme")}</option>
-        </select>
+    <button class="{b} {selectedText.fontWeight === 'bold'   ? on : off}" title={$tr("params.text.bold")}   onclick={toggleBold}><MdIcon icon="format_bold" /></button>
+    <button class="{b} {selectedText.fontStyle === 'italic'  ? on : off}" title={$tr("params.text.italic")} onclick={toggleItalic}><MdIcon icon="format_italic" /></button>
+  </div>
+
+  <!-- Row 2: Color popup, Split popup, AutoSize -->
+  <div class="flex flex-wrap gap-1">
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+    <div class="relative" onclick={(e) => e.stopPropagation()}>
+      <button class="{b} {off}" type="button" onclick={() => colorOpen = !colorOpen} title={$tr("params.color")}><MdIcon icon="format_color_fill" /></button>
+      {#if colorOpen}
+        <div class="absolute z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl top-full mt-1 p-2 flex flex-col gap-2" style="min-width:160px">
+          <div>
+            <div class="text-[10px] text-zinc-500 mb-1 flex items-center gap-1"><MdIcon icon="format_color_text" /> Text</div>
+            <div class="flex gap-1">
+              <button class="{b} flex-1 {selectedText.fill === 'white' ? on : off}" onclick={() => fillChanged("white")}>{$tr("params.color.white")}</button>
+              <button class="{b} flex-1 {selectedText.fill === 'black' ? on : off}" onclick={() => fillChanged("black")}>{$tr("params.color.black")}</button>
+            </div>
+          </div>
+          <div>
+            <div class="text-[10px] text-zinc-500 mb-1 flex items-center gap-1"><MdIcon icon="format_color_fill" /> Background</div>
+            <div class="flex gap-1">
+              <button class="{b} flex-1 {(selectedText.backgroundColor || '') === 'white'       ? on : off}" onclick={() => backgroundColorChanged("white")}>{$tr("params.color.white")}</button>
+              <button class="{b} flex-1 {(selectedText.backgroundColor || '') === 'black'       ? on : off}" onclick={() => backgroundColorChanged("black")}>{$tr("params.color.black")}</button>
+              <button class="{b} flex-1 {!(selectedText.backgroundColor) || selectedText.backgroundColor === 'transparent' ? on : off}" onclick={() => backgroundColorChanged("transparent")}>{$tr("params.color.transparent")}</button>
+            </div>
+          </div>
+        </div>
+      {/if}
+    </div>
+
+    {#if selectedText instanceof fabric.Textbox}
+      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+      <div class="relative" onclick={(e) => e.stopPropagation()}>
+        <button class="{b} {off}" type="button" onclick={() => splitOpen = !splitOpen} title={$tr("params.params.text.split")}><MdIcon icon="wrap_text" /></button>
+        {#if splitOpen}
+          <div class="absolute z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl top-full mt-1 p-1.5 flex gap-1">
+            <button class="{b} {!selectedText.splitByGrapheme ? on : off}" onclick={() => splitChanged("space")}>{$tr("params.params.text.split.spaces")}</button>
+            <button class="{b} {selectedText.splitByGrapheme  ? on : off}" onclick={() => splitChanged("grapheme")}>{$tr("params.params.text.split.grapheme")}</button>
+          </div>
+        {/if}
       </div>
-    </div>
+    {/if}
+
+    {#if selectedText instanceof TextboxExt}
+      <button class="{b} {selectedText.fontAutoSize ? on : off}" title={$tr("params.text.autosize")} data-ver={editRevision} onclick={toggleFontAutoSize}><MdIcon icon="expand" class="r-90" /></button>
     {/if}
   </div>
-{/if}
 
-{#if selectedText instanceof TextboxExt}
-  <!-- fixme: Custom property not auto-rendered for some reason -->
-  <button
-    class="inline-flex items-center gap-1 px-2 h-7 rounded border text-xs transition-colors {selectedText.fontAutoSize ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
-    title={$tr("params.text.autosize")}
+  <!-- Row 3: Font size -->
+  <div class="flex items-stretch">
+    <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.text.font_size")}><MdIcon icon="format_size" /></span>
+    <input type="number" min={sizeMin} max={sizeMax} step="2"
+      class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+      value={selectedText.fontSize}
+      oninput={(e) => fontSizeChange(e.currentTarget.valueAsNumber)} />
+    <button class="inline-flex items-center px-2 h-7 bg-zinc-800 hover:bg-zinc-700 border border-l-0 border-zinc-700 text-zinc-300 text-xs transition-colors" title={$tr("params.text.font_size.up")} onclick={fontSizeUp}><MdIcon icon="text_increase" /></button>
+    <button class="inline-flex items-center px-2 h-7 rounded-r bg-zinc-800 hover:bg-zinc-700 border border-l-0 border-zinc-700 text-zinc-300 text-xs transition-colors" title={$tr("params.text.font_size.down")} onclick={fontSizeDown}><MdIcon icon="text_decrease" /></button>
+  </div>
+
+  <!-- Row 4: Line height -->
+  <div class="flex items-stretch">
+    <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.text.line_height")}><MdIcon icon="density_medium" /></span>
+    <input type="number" min="0.1" step="0.1" max="10"
+      class="w-full bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+      value={selectedText.lineHeight}
+      oninput={(e) => lineHeightChange(e.currentTarget.valueAsNumber)} />
+  </div>
+
+  <!-- Row 5: Font family -->
+  <FontFamilyPicker {editRevision} value={selectedText.fontFamily} valueUpdated={updateFontFamily} />
+
+  <!-- Row 6: Inline text editor -->
+  <textarea
+    class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 resize-none"
+    rows="3"
     data-ver={editRevision}
-    onclick={toggleFontAutoSize}>
-    <MdIcon icon="expand" class="r-90" />
-  </button>
-{/if}
+    value={selectedText.text ?? ""}
+    oninput={(e) => {
+      selectedText.set({ text: e.currentTarget.value });
+      selectedText.isEditing = false;
+      valueUpdated();
+    }}></textarea>
 
-
-<div class="flex items-stretch flex-nowrap" style="width: 12em">
-  <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.text.font_size")}><MdIcon icon="format_size" /></span>
-  <input
-    type="number"
-    min={sizeMin}
-    max={sizeMax}
-    step="2"
-    class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
-    value={selectedText.fontSize}
-    oninput={(e) => fontSizeChange(e.currentTarget.valueAsNumber)} />
-  <button class="inline-flex items-center gap-1 px-2 h-7 bg-zinc-800 hover:bg-zinc-700 border border-l-0 border-zinc-700 text-zinc-300 text-xs transition-colors" title={$tr("params.text.font_size.up")} onclick={fontSizeUp}>
-    <MdIcon icon="text_increase" />
-  </button>
-  <button class="inline-flex items-center gap-1 px-2 h-7 rounded-r bg-zinc-800 hover:bg-zinc-700 border border-l-0 border-zinc-700 text-zinc-300 text-xs transition-colors" title={$tr("params.text.font_size.down")} onclick={fontSizeDown}>
-    <MdIcon icon="text_decrease" />
-  </button>
 </div>
-
-<div class="flex items-stretch flex-nowrap" style="width: 7em">
-  <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.text.line_height")}>
-    <MdIcon icon="density_medium" />
-  </span>
-  <input
-    type="number"
-    min="0.1"
-    step="0.1"
-    max="10"
-    class="w-full bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
-    value={selectedText.lineHeight}
-    oninput={(e) => lineHeightChange(e.currentTarget.valueAsNumber)} />
-</div>
-
-<FontFamilyPicker {editRevision} value={selectedText.fontFamily} valueUpdated={updateFontFamily} />
-
-<button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={editInPopup} title={$tr("params.text.edit")}>
-  <MdIcon icon="edit" />
-</button>

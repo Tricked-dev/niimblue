@@ -32,6 +32,11 @@ export class CustomCanvas extends fabric.Canvas {
   private pinchPointers = new Map<number, { x: number; y: number }>();
   private pinchStartDist: number = 0;
   private pinchStartZoom: number = 1;
+  private isMiddleDragging: boolean = false;
+  private middleDragStartClient: { x: number; y: number } = { x: 0, y: 0 };
+  private middleDragStartScroll: { x: number; y: number } = { x: 0, y: 0 };
+  private canvasContainerPadding: number = 3000;
+  private middleClickActive: boolean = false;
 
   constructor(
     el?: string | HTMLCanvasElement,
@@ -40,30 +45,115 @@ export class CustomCanvas extends fabric.Canvas {
     super(el, options);
     this.setupZoom();
     this.preserveObjectStacking = true;
+    // Prevent CSS scaling blur when the canvas element is zoomed
+    this.getElement().style.imageRendering = "pixelated";
   }
 
-  setScrollWrapper(wrapper: HTMLElement) {
+  setScrollWrapper(wrapper: HTMLElement, containerPadding = 3000) {
     this.scrollWrapper = wrapper;
+    this.canvasContainerPadding = containerPadding;
     this.setupPinch(wrapper);
+    this.setupWrapperWheel(wrapper);
+    this.setupMiddleDrag(wrapper);
   }
 
   private setupZoom() {
     this.on("mouse:wheel", (opt) => {
       const event = opt.e as WheelEvent;
       event.preventDefault();
+
+      // Shift + scroll → horizontal pan (no zoom)
+      if (event.shiftKey && !event.ctrlKey && !event.altKey) {
+        if (this.scrollWrapper) {
+          this.scrollWrapper.scrollLeft += event.deltaY;
+        }
+        return;
+      }
+
       const rect = this.getElement().getBoundingClientRect();
       const cursorX = event.clientX - rect.left;
       const cursorY = event.clientY - rect.top;
-      const factor = event.deltaY > 0 ? 0.95 : 1.05;
+
+      // Ctrl / Alt → 3× faster zoom
+      const speed = event.ctrlKey || event.altKey ? 3 : 1;
+      const step = 0.05 * speed;
+      const factor = event.deltaY > 0 ? 1 - step : 1 + step;
       this.zoomAroundPoint(cursorX, cursorY, factor);
     });
+  }
 
-    this.on("mouse:down:before", (opt) => {
-      const event = opt.e as MouseEvent;
-      if (event.button === 1) {
-        event.preventDefault();
-        this.fitToWrapper();
+  /** Zoom via scroll wheel even when cursor is over the wrapper (not the canvas) */
+  private setupWrapperWheel(wrapper: HTMLElement) {
+    wrapper.addEventListener("wheel", (e: WheelEvent) => {
+      // Skip if the event originated from inside the canvas container —
+      // fabric's own handler already deals with that.
+      const canvasContainer = this.getElement().parentElement;
+      if (canvasContainer && canvasContainer.contains(e.target as Node)) return;
+
+      e.preventDefault();
+
+      if (e.shiftKey && !e.ctrlKey && !e.altKey) {
+        wrapper.scrollLeft += e.deltaY;
+        return;
       }
+
+      // Use canvas position as zoom reference even when cursor is outside
+      const canvasRect = this.getElement().getBoundingClientRect();
+      const canvasX = e.clientX - canvasRect.left;
+      const canvasY = e.clientY - canvasRect.top;
+
+      const speed = e.ctrlKey || e.altKey ? 3 : 1;
+      const step = 0.05 * speed;
+      const factor = e.deltaY > 0 ? 1 - step : 1 + step;
+      this.zoomAroundPoint(canvasX, canvasY, factor);
+    }, { passive: false });
+  }
+
+  /** Middle-click drag → pan the scroll wrapper */
+  private setupMiddleDrag(wrapper: HTMLElement) {
+    // Prevent X11 primary-selection paste on Linux using multiple interception points.
+    // auxclick covers modern browsers; mouseup covers older/distro-specific behaviour.
+    window.addEventListener("auxclick", (e: MouseEvent) => {
+      if (e.button === 1) e.preventDefault();
+    }, { capture: true });
+    window.addEventListener("mouseup", (e: MouseEvent) => {
+      if (e.button === 1) e.preventDefault();
+    }, { capture: true });
+    // Block paste event when middle-click is active (belt-and-suspenders).
+    window.addEventListener("paste", (e: ClipboardEvent) => {
+      if (this.middleClickActive) { e.preventDefault(); e.stopPropagation(); }
+    }, { capture: true });
+
+    // Intercept before fabric sees the event, preventing accidental object creation.
+    window.addEventListener("mousedown", (e: MouseEvent) => {
+      if (e.button !== 1) return;
+      this.middleClickActive = true;
+      e.preventDefault();
+    }, { capture: true });
+
+    wrapper.addEventListener("mousedown", (e: MouseEvent) => {
+      if (e.button !== 1) return;
+      e.stopPropagation();
+      this.isMiddleDragging = true;
+      this.middleDragStartClient = { x: e.clientX, y: e.clientY };
+      this.middleDragStartScroll = { x: wrapper.scrollLeft, y: wrapper.scrollTop };
+      wrapper.style.cursor = "grabbing";
+    }, { capture: true });
+
+    document.addEventListener("mousemove", (e: MouseEvent) => {
+      if (!this.isMiddleDragging || !this.scrollWrapper) return;
+      const dx = e.clientX - this.middleDragStartClient.x;
+      const dy = e.clientY - this.middleDragStartClient.y;
+      this.scrollWrapper.scrollLeft = this.middleDragStartScroll.x - dx;
+      this.scrollWrapper.scrollTop = this.middleDragStartScroll.y - dy;
+    });
+
+    document.addEventListener("mouseup", (e: MouseEvent) => {
+      if (e.button !== 1) return;
+      this.isMiddleDragging = false;
+      if (this.scrollWrapper) this.scrollWrapper.style.cursor = "";
+      // Keep paste suppression active briefly to catch late-firing X11 paste events
+      setTimeout(() => { this.middleClickActive = false; }, 100);
     });
   }
 
@@ -110,18 +200,31 @@ export class CustomCanvas extends fabric.Canvas {
   }
 
   zoomAroundPoint(canvasX: number, canvasY: number, factor: number) {
-    const newZoom = Math.min(
-      Math.max(0.1, this.virtualZoomRatio * factor),
-      20,
-    );
+    const oldZoom = this.virtualZoomRatio;
+    const newZoom = Math.min(Math.max(0.1, oldZoom * factor), 20);
     if (this.scrollWrapper) {
-      const labelPxX =
-        (this.scrollWrapper.scrollLeft + canvasX) / this.virtualZoomRatio;
-      const labelPxY =
-        (this.scrollWrapper.scrollTop + canvasY) / this.virtualZoomRatio;
+      const P = this.canvasContainerPadding;
+      const wrapW = this.scrollWrapper.clientWidth;
+      const wrapH = this.scrollWrapper.clientHeight;
+      const oldCssW = this.getWidth() * oldZoom;
+      const oldCssH = this.getHeight() * oldZoom;
+      // Canvas content-space position (padding + flexbox centering), purely from state — no DOM reads
+      const oldCanvasContentX = P + Math.max(0, (wrapW - oldCssW) / 2);
+      const oldCanvasContentY = P + Math.max(0, (wrapH - oldCssH) / 2);
+      // Canvas screen position = content position - scroll
+      const oldCanvasScreenX = oldCanvasContentX - this.scrollWrapper.scrollLeft;
+      const oldCanvasScreenY = oldCanvasContentY - this.scrollWrapper.scrollTop;
+      // Label pixel under cursor (invariant across zoom)
+      const labelPxX = canvasX / oldZoom;
+      const labelPxY = canvasY / oldZoom;
       this.virtualZoom(newZoom);
-      this.scrollWrapper.scrollLeft = labelPxX * newZoom - canvasX;
-      this.scrollWrapper.scrollTop = labelPxY * newZoom - canvasY;
+      const newCssW = this.getWidth() * newZoom;
+      const newCssH = this.getHeight() * newZoom;
+      const newCanvasContentX = P + Math.max(0, (wrapW - newCssW) / 2);
+      const newCanvasContentY = P + Math.max(0, (wrapH - newCssH) / 2);
+      // Keep cursor at same screen position
+      this.scrollWrapper.scrollLeft = newCanvasContentX - oldCanvasScreenX - canvasX + labelPxX * newZoom;
+      this.scrollWrapper.scrollTop  = newCanvasContentY - oldCanvasScreenY - canvasY + labelPxY * newZoom;
     } else {
       this.virtualZoom(newZoom);
     }
@@ -156,8 +259,9 @@ export class CustomCanvas extends fabric.Canvas {
   }
 
   public fitToWrapper() {
-    if (!this.scrollWrapper) {
-      this.resetVirtualZoom();
+    if (!this.scrollWrapper || this.scrollWrapper.clientWidth === 0) {
+      // Wrapper not ready yet — retry next frame
+      requestAnimationFrame(() => this.fitToWrapper());
       return;
     }
     const wrapW = this.scrollWrapper.clientWidth;
@@ -165,10 +269,10 @@ export class CustomCanvas extends fabric.Canvas {
     const zoomX = wrapW / this.getWidth();
     const zoomY = wrapH / this.getHeight();
     this.virtualZoom(Math.min(zoomX, zoomY) * 0.9);
-    const cssW = this.virtualZoomRatio * this.getWidth();
-    const cssH = this.virtualZoomRatio * this.getHeight();
-    this.scrollWrapper.scrollLeft = (cssW - wrapW) / 2;
-    this.scrollWrapper.scrollTop = (cssH - wrapH) / 2;
+    // Reading scrollWidth/scrollHeight after setting CSS dimensions triggers a
+    // synchronous reflow, giving the true content size — no need to predict it.
+    this.scrollWrapper.scrollLeft = (this.scrollWrapper.scrollWidth - wrapW) / 2;
+    this.scrollWrapper.scrollTop  = (this.scrollWrapper.scrollHeight - wrapH) / 2;
   }
 
   setLabelProps(value: LabelProps) {

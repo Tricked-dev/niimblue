@@ -63,17 +63,14 @@
 {/if}
 
 {#if selectedObject instanceof fabric.Rect || selectedObject instanceof fabric.Circle}
-  <div class="flex items-stretch flex-nowrap" style="width: 12em">
-    <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l" title={$tr("params.vector.fill")}>
-      <MdIcon icon="format_color_fill" />
-    </span>
-    <select
-      class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1"
-      value={selectedObject.fill}
-      onchange={(e) => fillChanged(e.currentTarget.value)}>
-      <option value="transparent">{$tr("params.color.transparent")}</option>
-      <option value="white">{$tr("params.color.white")}</option>
-      <option value="black">{$tr("params.color.black")}</option>
-    </select>
+  <div class="flex gap-1 flex-wrap">
+    {#each [["transparent", $tr("params.color.transparent")], ["white", $tr("params.color.white")], ["black", $tr("params.color.black")]] as [val, label] (val)}
+      <button
+        class="inline-flex items-center justify-center px-2 h-7 rounded border text-xs transition-colors {selectedObject.fill === val ? 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-zinc-300' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
+        title={$tr("params.vector.fill")}
+        onclick={() => fillChanged(val)}>
+        {label}
+      </button>
+    {/each}
   </div>
 {/if}

@@ -91,7 +91,15 @@ export const THUMBNAIL_QUALITY = 0.7;
 
 export const APP_CONFIG_DEFAULTS: AppConfig = {
   fitMode: "stretch",
-  iconListMode: "both"
+  iconListMode: "both",
 };
 
 export const CSV_DEFAULT = "var1,var2\n123,456\n777,888";
+
+/** Bundled fonts that are included with the app */
+export const BUNDLED_FONTS = [
+  { family: "Open Sans", url: "/fonts/OSans-R.ttf", weight: "normal" as const, style: "normal" as const },
+  { family: "Open Sans", url: "/fonts/OSans-B.ttf", weight: "bold" as const, style: "normal" as const },
+] as const;
+
+export type BundledFont = (typeof BUNDLED_FONTS)[number];

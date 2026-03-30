@@ -1,17 +1,21 @@
 <script lang="ts">
+  interface Highlight { start: number; end: number }
+
   interface Props {
     zoom: number;
     scrollOffset: number;
     dpmm: number;
     length: number;
     axis: "horizontal" | "vertical";
+    highlight?: Highlight;
   }
 
-  let { zoom, scrollOffset, dpmm, length, axis }: Props = $props();
+  let { zoom, scrollOffset, dpmm, length, axis, highlight }: Props = $props();
 
   const THICKNESS = 18;
   const TICK_COLOR = "#45475a";
   const LABEL_COLOR = "#6c7086";
+  const HL_COLOR = "rgba(96,165,250,0.35)"; // blue-400 faint
 
   const mmPx = $derived(zoom * dpmm);
 
@@ -47,6 +51,15 @@
     height={THICKNESS}
     style="display:block;flex-shrink:0;background:#1e1e2e;border-bottom:1px solid #313244"
   >
+    {#if highlight}
+      <rect
+        x={highlight.start} y={0}
+        width={highlight.end - highlight.start} height={THICKNESS}
+        fill={HL_COLOR}
+      />
+      <line x1={highlight.start} y1={0} x2={highlight.start} y2={THICKNESS} stroke="rgba(96,165,250,0.7)" stroke-width="1" />
+      <line x1={highlight.end}   y1={0} x2={highlight.end}   y2={THICKNESS} stroke="rgba(96,165,250,0.7)" stroke-width="1" />
+    {/if}
     {#each ticks as tick}
       <line
         x1={tick.pos} y1={tick.major ? THICKNESS - 10 : THICKNESS - 6}
@@ -55,13 +68,7 @@
         stroke-width="1"
       />
       {#if tick.label}
-        <text
-          x={tick.pos + 2}
-          y={THICKNESS - 11}
-          fill={LABEL_COLOR}
-          font-size="7"
-          font-family="monospace"
-        >{tick.label}</text>
+        <text x={tick.pos + 2} y={THICKNESS - 11} fill={LABEL_COLOR} font-size="7" font-family="monospace">{tick.label}</text>
       {/if}
     {/each}
   </svg>
@@ -71,6 +78,15 @@
     height={length}
     style="display:block;flex-shrink:0;background:#1e1e2e;border-right:1px solid #313244"
   >
+    {#if highlight}
+      <rect
+        x={0} y={highlight.start}
+        width={THICKNESS} height={highlight.end - highlight.start}
+        fill={HL_COLOR}
+      />
+      <line x1={0} y1={highlight.start} x2={THICKNESS} y2={highlight.start} stroke="rgba(96,165,250,0.7)" stroke-width="1" />
+      <line x1={0} y1={highlight.end}   x2={THICKNESS} y2={highlight.end}   stroke="rgba(96,165,250,0.7)" stroke-width="1" />
+    {/if}
     {#each ticks as tick}
       <line
         x1={tick.major ? THICKNESS - 10 : THICKNESS - 6} y1={tick.pos}
@@ -80,11 +96,8 @@
       />
       {#if tick.label}
         <text
-          x={THICKNESS - 11}
-          y={tick.pos - 2}
-          fill={LABEL_COLOR}
-          font-size="7"
-          font-family="monospace"
+          x={THICKNESS - 11} y={tick.pos - 2}
+          fill={LABEL_COLOR} font-size="7" font-family="monospace"
           transform={`rotate(-90 ${THICKNESS - 11} ${tick.pos - 2})`}
         >{tick.label}</text>
       {/if}

@@ -67,9 +67,12 @@
 <svelte:window onclick={() => open = false} />
 
 <div class="relative" onclick={(e) => e.stopPropagation()}>
-  <button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={() => open = !open}>
+  <button
+    class="w-8 h-8 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+    title={$tr("editor.iconpicker.title")}
+    onclick={() => open = !open}
+  >
     <MdIcon icon="emoji_emotions" />
-    <MdIcon icon="add" />
   </button>
 
   {#if open}
@@ -83,13 +86,15 @@
         placeholder={$tr("editor.iconpicker.search")}
         bind:value={search} />
 
-      <div class="flex items-stretch mb-1">
-        <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("editor.iconpicker.show")}</span>
-        <select class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500" bind:value={$appConfig.iconListMode}>
-          <option value="both">{$tr("editor.iconpicker.show.both")}</option>
-          <option value="user">{$tr("editor.iconpicker.show.user")}</option>
-          <option value="pack">{$tr("editor.iconpicker.show.pack")}</option>
-        </select>
+      <div class="flex items-center gap-1 mb-1">
+        <span class="text-[10px] text-zinc-500">{$tr("editor.iconpicker.show")}</span>
+        {#each [["both", $tr("editor.iconpicker.show.both")], ["user", $tr("editor.iconpicker.show.user")], ["pack", $tr("editor.iconpicker.show.pack")]] as [val, label] (val)}
+          <button
+            class="inline-flex items-center px-2 h-6 rounded border text-[11px] transition-colors {$appConfig.iconListMode === val ? 'bg-zinc-700 border-zinc-600 text-zinc-200' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
+            onclick={() => { $appConfig.iconListMode = val as any; }}>
+            {label}
+          </button>
+        {/each}
       </div>
 
       <div class="mb-1 flex flex-wrap gap-1" style="max-height: 400px; overflow-y: scroll;">

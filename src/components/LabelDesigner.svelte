@@ -26,6 +26,14 @@
   import { CanvasUtils } from "$/utils/canvas_utils";
   import DesignerShell from "$/components/DesignerShell.svelte";
   import PrintPreview from "$/components/PrintPreview.svelte";
+  import type { LabelPreset } from "$/types";
+
+  interface Props {
+    initialPreset?: LabelPreset;
+    initialLabel?: ExportedLabelTemplate;
+  }
+
+  let { initialPreset, initialLabel }: Props = $props();
 
   let htmlCanvas = $state<HTMLCanvasElement | undefined>();
   let fabricCanvas = $state<CustomCanvas>();
@@ -127,7 +135,7 @@
   const onUpdateLabelProps = (newProps: LabelProps) => {
     labelProps = newProps;
     fabricCanvas!.setDimensions(labelProps.size);
-    fabricCanvas!.virtualZoom(fabricCanvas!.getVirtualZoom());
+    fabricCanvas!.fitToWrapper();
     try {
       LocalStoragePersistence.saveLastLabelProps(labelProps);
       undo.push(fabricCanvas!, labelProps);
@@ -308,7 +316,26 @@
     });
     fabricCanvas.setLabelProps(labelProps);
 
-    await loadDefaultLabel();
+    if (initialLabel !== undefined) {
+      await loadLabelData(initialLabel);
+    } else {
+      if (initialPreset !== undefined) {
+        onUpdateLabelProps({
+          printDirection: initialPreset.printDirection,
+          size: {
+            width: Math.floor(initialPreset.unit === "mm" ? initialPreset.width * initialPreset.dpmm : initialPreset.width),
+            height: Math.floor(initialPreset.unit === "mm" ? initialPreset.height * initialPreset.dpmm : initialPreset.height),
+          },
+          shape: initialPreset.shape ?? "rect",
+          split: initialPreset.split ?? "none",
+          splitParts: initialPreset.splitParts ?? 2,
+          tailPos: initialPreset.tailPos ?? "right",
+          tailLength: Math.floor(initialPreset.unit === "mm" ? (initialPreset.tailLength ?? 0) * initialPreset.dpmm : initialPreset.tailLength ?? 0),
+          mirror: initialPreset.mirror ?? "none",
+        });
+      }
+      await loadDefaultLabel();
+    }
 
     window.addEventListener("hashchange", loadLabelFromUrl);
 

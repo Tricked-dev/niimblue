@@ -301,10 +301,13 @@
     <input class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500" type="number" min="1" step={unit === "px" ? 8 : 1} bind:value={width} />
     <button class="inline-flex items-center gap-1 px-2 h-7 bg-zinc-800 hover:bg-zinc-700 border border-l-0 border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={onFlip}><MdIcon icon="swap_horiz" /></button>
     <input class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500" type="number" min="1" step={unit === "px" ? 8 : 1} bind:value={height} />
-    <select class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500" bind:value={unit} onchange={onUnitChange}>
-      <option value="mm"> {$tr("params.label.mm")}</option>
-      <option value="px"> {$tr("params.label.px")}</option>
-    </select>
+    {#each [["mm", $tr("params.label.mm")], ["px", $tr("params.label.px")]] as [val, label] (val)}
+      <button
+        class="inline-flex items-center justify-center px-2 h-7 border border-l-0 border-zinc-700 text-xs transition-colors last:rounded-r {unit === val ? 'bg-zinc-700 text-zinc-200' : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'}"
+        onclick={() => { unit = val as any; onUnitChange(); }}>
+        {label}
+      </button>
+    {/each}
   </div>
 
   {#if unit !== "px"}

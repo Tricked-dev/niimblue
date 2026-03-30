@@ -15,12 +15,11 @@
 
   const onImportClicked = async () => {
     const mmToInchCoeff = 25.4;
-    const dpmm = 8; // todo: may vary, make it configurable
+    const dpmm = 8;
     const widthInches = labelProps.size.width / dpmm / mmToInchCoeff;
     const heightInches = labelProps.size.height / dpmm / mmToInchCoeff;
 
     const contents = await FileUtils.pickAndReadSingleTextFile("zpl");
-
     importState = "processing";
 
     try {
@@ -28,17 +27,12 @@
         `https://api.labelary.com/v1/printers/${dpmm}dpmm/labels/${widthInches}x${heightInches}/0/`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Accept: "image/png",
-            "X-Quality": "bitonal",
-          },
+          headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "image/png", "X-Quality": "bitonal" },
           body: contents,
         },
       );
       if (response.ok) {
-        const img = await response.blob();
-        onImageReady(img);
+        onImageReady(await response.blob());
         importState = "idle";
       } else {
         importState = "error";
@@ -50,14 +44,15 @@
   };
 </script>
 
-<button class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors" onclick={onImportClicked}>
+<button
+  class="w-8 h-8 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors relative"
+  title={$tr("editor.import.zpl")}
+  onclick={onImportClicked}
+>
   <MdIcon icon="picture_as_pdf" />
-
-  {$tr("editor.import.zpl")}
-
   {#if importState === "processing"}
-    <MdIcon icon="hourglass_top" />
+    <span class="absolute top-0 right-0 w-2 h-2 bg-yellow-400 rounded-full"></span>
   {:else if importState === "error"}
-    <MdIcon icon="warning" class="text-yellow-400" />
+    <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
   {/if}
 </button>

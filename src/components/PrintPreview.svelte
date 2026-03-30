@@ -582,7 +582,7 @@
       <MdIcon icon="print" />
     </button>
 
-    <button type="button" class="inline-flex items-center gap-1 px-2.5 h-7 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors" disabled={$disconnected || printState !== "idle"} onclick={onPrint}>
+    <button type="button" class="inline-flex items-center gap-1 px-2.5 h-7 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors whitespace-nowrap" disabled={$disconnected || printState !== "idle"} onclick={onPrint}>
       {#if $disconnected}
         {$tr("preview.not_connected")}
       {:else}

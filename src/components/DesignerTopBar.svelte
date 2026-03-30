@@ -47,7 +47,7 @@
   </button>
 
   <!-- Open -->
-  <button class={btn} onclick={onOpen}>
+  <button class={btn} title={$tr("editor.open")} onclick={onOpen}>
     <MdIcon icon="folder_open" />
   </button>
 
