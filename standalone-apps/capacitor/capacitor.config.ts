@@ -1,7 +1,8 @@
 import { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "ru.mmote.niimblues",
+  //TODO: PLEASE CHANGE BACK AGAIN LATER!!!
+  appId: "dev.tricked.niimblues",
   appName: "NiimBlues",
   webDir: "www",
   plugins: {

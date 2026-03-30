@@ -48,7 +48,7 @@
 
 <BrowserWarning bind:show={showBrowserWarning} />
 
-<header class="h-10 flex items-center gap-1 px-3 bg-zinc-900 border-b border-zinc-800 shrink-0 z-20">
+<header class="flex items-center gap-1 px-3 bg-zinc-900 border-b border-zinc-800 shrink-0 z-20 h-[calc(2.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] pl-[calc(0.75rem+env(safe-area-inset-left))] pr-[calc(0.75rem+env(safe-area-inset-right))]">
   <!-- Logo -->
   <span class="font-bold text-[15px] mr-2 select-none">
     <span class="text-red-400">Niim</span><span class="text-blue-400">Blue</span>

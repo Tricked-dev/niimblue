@@ -258,7 +258,7 @@
   <!-- Mobile sheet -->
   <div
     class="bg-zinc-900 border-t border-zinc-800 transition-[height] duration-200"
-    style="height: {sheetExpanded ? '50vh' : '36px'}; overflow: hidden;">
+    style="height: {sheetExpanded ? '50vh' : '36px'}; overflow: hidden; padding-bottom: env(safe-area-inset-bottom);">
     <!-- Handle + tabs row -->
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
