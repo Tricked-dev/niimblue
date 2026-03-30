@@ -121,32 +121,42 @@
   {/if}
 
   <!-- Printer badge -->
-  {#if $connectionState === "connected"}
-    <span class="text-[10px] px-2 py-0.5 bg-green-900 text-green-300 rounded-full border border-green-700 font-medium">
-      ● {$connectedPrinterName || "Connected"}
-    </span>
-  {:else if $connectionState === "connecting"}
-    <span class="text-[10px] px-2 py-0.5 bg-zinc-800 text-zinc-400 rounded-full border border-zinc-700">
-      ○ Connecting…
-    </span>
+  {#if isMobile}
+    {#if $connectionState === "connected"}
+      <span class="text-green-400 text-base">✓</span>
+    {:else if $connectionState === "connecting"}
+      <span class="text-zinc-400 text-[10px]">○</span>
+    {:else}
+      <span class="text-zinc-500 text-[10px]">○</span>
+    {/if}
   {:else}
-    <span class="text-[10px] px-2 py-0.5 bg-zinc-800 text-zinc-400 rounded-full border border-zinc-700">
-      ○ Not connected
-    </span>
+    {#if $connectionState === "connected"}
+      <span class="text-[10px] px-2 py-0.5 bg-green-900 text-green-300 rounded-full border border-green-700 font-medium">
+        ● {$connectedPrinterName || "Connected"}
+      </span>
+    {:else if $connectionState === "connecting"}
+      <span class="text-[10px] px-2 py-0.5 bg-zinc-800 text-zinc-400 rounded-full border border-zinc-700">
+        ○ Connecting…
+      </span>
+    {:else}
+      <span class="text-[10px] px-2 py-0.5 bg-zinc-800 text-zinc-400 rounded-full border border-zinc-700">
+        ○ Not connected
+      </span>
+    {/if}
+
+    <!-- Divider -->
+    <div class="w-px h-5 bg-zinc-700 mx-1"></div>
+
+    <!-- Preview -->
+    <button class={btn} title={$tr("editor.preview")} onclick={onPreview}>
+      <MdIcon icon="visibility" />
+      Preview
+    </button>
+
+    <!-- Print -->
+    <button class={btnPrimary} title={$tr("editor.print")} onclick={onPrint} disabled={$connectionState !== "connected"}>
+      <MdIcon icon="print" />
+      Print
+    </button>
   {/if}
-
-  <!-- Divider -->
-  <div class="w-px h-5 bg-zinc-700 mx-1"></div>
-
-  <!-- Preview -->
-  <button class={btn} title={$tr("editor.preview")} onclick={onPreview}>
-    <MdIcon icon="visibility" />
-    Preview
-  </button>
-
-  <!-- Print -->
-  <button class={btnPrimary} title={$tr("editor.print")} onclick={onPrint} disabled={$connectionState !== "connected"}>
-    <MdIcon icon="print" />
-    Print
-  </button>
 </header>

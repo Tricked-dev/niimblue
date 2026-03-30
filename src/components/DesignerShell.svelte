@@ -345,6 +345,8 @@
       {onDeleteSelected}
       {onCloneSelected}
       {onObjectPicked}
+      {onPreview}
+      {onPrint}
       sheet={true} />
   {/if}
 </div>

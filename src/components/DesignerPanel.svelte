@@ -29,6 +29,8 @@
     onDeleteSelected: () => void;
     onCloneSelected: () => void;
     onObjectPicked?: (type: OjectType) => void;
+    onPreview?: () => void;
+    onPrint?: () => void;
     sheet?: boolean;
   }
 
@@ -41,6 +43,8 @@
     onDeleteSelected,
     onCloneSelected,
     onObjectPicked,
+    onPreview,
+    onPrint,
     sheet = false,
   }: Props = $props();
 
@@ -360,6 +364,21 @@
             <p class="text-xs text-zinc-500">Select an object to edit its position</p>
           {/if}
         {:else if activeTab === "printer"}
+          <div class="flex gap-2 mb-3">
+            <button
+              class="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm transition-colors"
+              onclick={onPreview}>
+              <MdIcon icon="visibility" />
+              Preview
+            </button>
+            <button
+              class="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              onclick={onPrint}
+              disabled={$connectionState !== "connected"}>
+              <MdIcon icon="print" />
+              Print
+            </button>
+          </div>
           <PrinterConnector />
         {:else if activeTab === "language"}
           <div class="flex flex-col gap-3">
