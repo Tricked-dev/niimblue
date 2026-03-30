@@ -31,6 +31,7 @@
     onObjectPicked?: (type: OjectType) => void;
     onPreview?: () => void;
     onPrint?: () => void;
+    onLabelSettingsOpen?: () => void;
     sheet?: boolean;
   }
 
@@ -45,6 +46,7 @@
     onObjectPicked,
     onPreview,
     onPrint,
+    onLabelSettingsOpen,
     sheet = false,
   }: Props = $props();
 
@@ -318,6 +320,13 @@
               </button>
             {/each}
           </div>
+          <hr class="border-zinc-700 my-3" />
+          <button
+            class="w-full inline-flex items-center justify-center gap-1.5 h-9 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm transition-colors"
+            onclick={(e) => { e.stopPropagation(); onLabelSettingsOpen?.(); }}>
+            <MdIcon icon="settings" />
+            Label Settings
+          </button>
         {:else if activeTab === "object"}
           {#if selectedCount > 0}
             <div class="flex items-center justify-between mb-2">

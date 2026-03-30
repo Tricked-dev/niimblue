@@ -191,7 +191,7 @@
 
   // Settings button in rail opens label settings
   const openLabelSettings = () => {
-    if (canvas && canvas.getActiveObject()) return;
+    if (!isMobile && canvas && canvas.getActiveObject()) return;
     labelSettingsOpen = true;
     labelSettingsPos = null; // centered modal mode
     onLabelSettingsOpen();
@@ -347,6 +347,7 @@
       {onObjectPicked}
       {onPreview}
       {onPrint}
+      onLabelSettingsOpen={openLabelSettings}
       sheet={true} />
   {/if}
 </div>
