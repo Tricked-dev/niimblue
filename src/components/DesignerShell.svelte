@@ -301,7 +301,7 @@
                 Layers
               </div>
               <div class="overflow-y-auto" style="max-height:calc(40vh - 32px)">
-                <DesignerLayers {canvas} revision={editRevision} />
+                <DesignerLayers {canvas} revision={editRevision} onSelectionChange={() => { if (isMobile) layersOpen = false; }} />
               </div>
             </div>
           {/if}

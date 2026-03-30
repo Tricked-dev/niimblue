@@ -88,7 +88,10 @@
   let activeTab = $state<"add" | "object" | "position" | "printer" | "language">("add");
 
   $effect(() => {
-    if (selectedObject) activeTab = "object";
+    if (selectedObject) {
+      activeTab = "object";
+      sheetExpanded = true;
+    }
   });
 </script>
 

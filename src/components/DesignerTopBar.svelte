@@ -6,6 +6,7 @@
   import { Utils } from "@mmote/niimbluelib";
   import { detectAntiFingerprinting } from "$/utils/browsers";
   import BrowserWarning from "$/components/basic/BrowserWarning.svelte";
+  import { Toasts } from "$/utils/toasts";
 
   interface Props {
     undoState: UndoState;
@@ -122,12 +123,18 @@
 
   <!-- Printer badge -->
   {#if isMobile}
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     {#if $connectionState === "connected"}
-      <span class="text-green-400 text-base">✓</span>
+      <span
+        class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-900 border border-green-700 text-green-400 text-sm cursor-pointer"
+        title={$connectedPrinterName || "Connected"}
+        onclick={() => Toasts.message(`Connected to ${$connectedPrinterName || "printer"}`)}>
+        ✓
+      </span>
     {:else if $connectionState === "connecting"}
-      <span class="text-zinc-400 text-[10px]">○</span>
+      <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 text-[10px]">○</span>
     {:else}
-      <span class="text-zinc-500 text-[10px]">○</span>
+      <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-500 text-[10px]">○</span>
     {/if}
   {:else}
     {#if $connectionState === "connected"}

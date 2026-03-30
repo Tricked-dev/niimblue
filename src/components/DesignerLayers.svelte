@@ -16,6 +16,8 @@
 
   let { canvas, revision, onSelectionChange }: Props = $props();
 
+  let localRevision = $state(0);
+
   const objectIcon = (obj: fabric.FabricObject): MaterialIcon => {
     if (obj instanceof fabric.IText || obj instanceof fabric.Textbox) return "title";
     if (obj instanceof Barcode) return "view_week";
@@ -60,7 +62,7 @@
   };
 
   const objects = $derived.by(() => {
-    void revision; // track changes
+    void revision; void localRevision; // track changes
     if (!canvas) return [];
     return [...canvas.getObjects()].reverse(); // top-most first
   });
@@ -88,12 +90,14 @@
     e.stopPropagation();
     canvas?.bringObjectForward(obj);
     canvas?.requestRenderAll();
+    localRevision++;
   };
 
   const moveDown = (obj: fabric.FabricObject, e: MouseEvent) => {
     e.stopPropagation();
     canvas?.sendObjectBackwards(obj);
     canvas?.requestRenderAll();
+    localRevision++;
   };
 </script>
 
@@ -111,7 +115,7 @@
       <span class="flex-1 text-[11px] text-zinc-300 truncate leading-none py-0.5">
         {objectLabel(obj)}
       </span>
-      <span class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+      <span class="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
         <button
           class="w-4 h-4 flex items-center justify-center text-zinc-500 hover:text-zinc-200 transition-colors text-[11px]"
           title="Move up"
