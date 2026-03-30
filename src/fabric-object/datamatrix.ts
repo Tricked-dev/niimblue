@@ -49,24 +49,31 @@ export class Datamatrix<
       this._cachedImage = null;
       return;
     }
-    const matrixResult = encodeToMatrix(this.text, false, true);
-    const dimension = Math.max(matrixResult.width, matrixResult.height);
-    const svgElement = matrixToSvg(matrixResult, {
-      dimension,
-      padding: 0,
-    });
-    this._matrixSize = dimension;
-    const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svgElement);
-    const img = new Image();
-    img.onload = () => {
-      this._cachedImage = img;
-      this._cachedText = this.text;
-      this._cachedCellSize = this.cellSize;
-      this.dirty = true;
-      this.canvas?.requestRenderAll();
-    };
-    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
+    try {
+      const matrixResult = encodeToMatrix(this.text, false, true);
+      const dimension = Math.max(matrixResult.width, matrixResult.height);
+      const svgElement = matrixToSvg(matrixResult, {
+        dimension,
+        padding: 0,
+      });
+      this._matrixSize = dimension;
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(svgElement);
+      const img = new Image();
+      img.onload = () => {
+        this._cachedImage = img;
+        this._cachedText = this.text;
+        this._cachedCellSize = this.cellSize;
+        this.dirty = true;
+        this.canvas?.requestRenderAll();
+      };
+      img.onerror = () => {
+        this._cachedImage = null;
+      };
+      img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
+    } catch (e) {
+      this._cachedImage = null;
+    }
   }
 
   override _set(key: string, value: any): this {
