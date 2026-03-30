@@ -86,6 +86,13 @@
   }
 }
 
+/* Prevent iOS auto-zoom on input focus */
+@media screen and (max-width: 639px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Toastify overrides */
 .toastify.toast-danger {
   background: oklch(0.704 0.191 22.216);
