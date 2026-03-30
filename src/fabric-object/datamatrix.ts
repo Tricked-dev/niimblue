@@ -1,6 +1,6 @@
 import { OBJECT_SIZE_DEFAULTS } from "$/defaults";
 import { CanvasUtils } from "$/utils/canvas_utils";
-import { encodeToMatrix, matrixToSvg } from "datamatrix-svg-ts";
+import { encodeToMatrix } from "datamatrix-svg-ts";
 import * as fabric from "fabric";
 
 export const datamatrixDefaultValues: Partial<fabric.TClassProperties<Datamatrix>> = {
@@ -30,72 +30,44 @@ export class Datamatrix<
   declare text: string;
   declare cellSize: number;
 
-  private _cachedImage: HTMLImageElement | null = null;
-  private _cachedText: string = "";
-  private _cachedCellSize: number = 0;
-  private _matrixSize: number = 0;
-
   constructor(options?: Props) {
     super();
     Object.assign(this, datamatrixDefaultValues);
     this.setOptions(options);
     this.lockScalingFlip = true;
     this.setControlsVisibility({ ml: false, mt: false, mr: false, mb: false });
-    this._buildImage();
-  }
-
-  private _buildImage() {
-    if (!this.text) {
-      this._cachedImage = null;
-      return;
-    }
-    try {
-      const matrixResult = encodeToMatrix(this.text, false, true);
-      const dimension = Math.max(matrixResult.width, matrixResult.height);
-      const svgElement = matrixToSvg(matrixResult, {
-        dimension,
-        padding: 0,
-      });
-      this._matrixSize = dimension;
-      const serializer = new XMLSerializer();
-      const svgString = serializer.serializeToString(svgElement);
-      const img = new Image();
-      img.onload = () => {
-        this._cachedImage = img;
-        this._cachedText = this.text;
-        this._cachedCellSize = this.cellSize;
-        this.dirty = true;
-        this.canvas?.requestRenderAll();
-      };
-      img.onerror = () => {
-        this._cachedImage = null;
-      };
-      img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
-    } catch (e) {
-      this._cachedImage = null;
-    }
   }
 
   override _set(key: string, value: any): this {
     super._set(key, value);
     if (key === "text" || key === "cellSize") {
-      this._buildImage();
+      this.dirty = true;
     }
     return this;
   }
 
   override _render(ctx: CanvasRenderingContext2D): void {
-    if (!this._cachedImage) {
+    if (!this.text) {
       CanvasUtils.renderError(ctx, this.width, this.height);
       super._render(ctx);
       return;
     }
 
-    const matrixScale = Math.floor(this.width / this._matrixSize);
-    let renderWidth = matrixScale * this._matrixSize;
+    let matrixResult;
+    try {
+      matrixResult = encodeToMatrix(this.text, false, true);
+    } catch (e) {
+      CanvasUtils.renderError(ctx, this.width, this.height);
+      super._render(ctx);
+      return;
+    }
+
+    const matrixSize = Math.max(matrixResult.width, matrixResult.height);
+    const scale = Math.floor(this.width / matrixSize);
+    let renderWidth = scale * matrixSize;
     renderWidth -= renderWidth % 2;
 
-    if (matrixScale < 1 || renderWidth > this.width) {
+    if (scale < 1 || renderWidth > this.width) {
       CanvasUtils.renderError(ctx, this.width, this.height);
       super._render(ctx);
       return;
@@ -103,8 +75,18 @@ export class Datamatrix<
 
     ctx.save();
     ctx.translate(-renderWidth / 2, -renderWidth / 2);
+    ctx.translate(-0.5, -0.5);
+    ctx.fillStyle = "black";
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(this._cachedImage, 0, 0, renderWidth, renderWidth);
+
+    for (let row = 0; row < matrixResult.height; row++) {
+      for (let col = 0; col < matrixResult.width; col++) {
+        if (matrixResult.matrix[row]?.[col] === 1) {
+          ctx.fillRect(col * scale, row * scale, scale, scale);
+        }
+      }
+    }
+
     ctx.restore();
     super._render(ctx);
   }

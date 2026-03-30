@@ -4,11 +4,22 @@ import { ArUcoMarker } from "$/fabric-object/aruco";
 import Barcode from "$/fabric-object/barcode";
 import { QRCode } from "$/fabric-object/qrcode";
 import { Datamatrix } from "$/fabric-object/datamatrix";
-import type { OjectType } from "$/types";
+import type { OjectType, PostProcessType } from "$/types";
 import { Toasts } from "$/utils/toasts";
 import { FileUtils } from "$/utils/file_utils";
 import { CanvasUtils } from "$/utils/canvas_utils";
 import { TextboxExt, TextboxExtProps } from "$/fabric-object/textbox-ext";
+import { calculateFitScale, processImageElement, type ImageProcessOptions } from "$/utils/image_process";
+
+interface ProcessedImageData {
+  originalBlob: Blob;
+  originalUrl: string;
+  originalElement: HTMLImageElement;
+  processOptions: ImageProcessOptions;
+  lastScale: number;
+  lastWidth: number;
+  lastHeight: number;
+}
 
 export class LabelDesignerObjectHelper {
   static async addSvg(canvas: fabric.Canvas, svgCode: string): Promise<fabric.FabricObject | fabric.Group> {
@@ -47,23 +58,138 @@ export class LabelDesignerObjectHelper {
     throw new Error("Unsupported image");
   }
 
-  static async addImageWithFilePicker(fabricCanvas: fabric.Canvas): Promise<fabric.FabricObject | fabric.Group> {
-    const files = await FileUtils.pickFileAsync("*", false);
-    try {
-      return await this.addImageFile(fabricCanvas, files[0]);
-    } catch (e) {
-      // fixme: catch error in other place
-      Toasts.error(e);
-      throw e;
-    }
+  static async addImageWithFilePicker(fabricCanvas: fabric.Canvas): Promise<fabric.FabricObject | fabric.Group | null> {
+    return new Promise((resolve, reject) => {
+      const handleFile = async (blob: Blob) => {
+        try {
+          const obj = await this.addImageBlob(fabricCanvas, blob);
+          resolve(obj);
+        } catch (e) {
+          Toasts.error(e);
+          reject(e);
+        }
+      };
+
+      const handleCancel = () => {
+        resolve(null);
+      };
+
+      const event = new CustomEvent("openImageImportModal", {
+        detail: { onSubmit: handleFile, onCancel: handleCancel },
+        bubbles: true,
+      });
+      document.dispatchEvent(event);
+    });
   }
 
-  static async addImageBlob(fabricCanvas: fabric.Canvas, img: Blob): Promise<fabric.FabricImage> {
+  static async addImageBlob(
+    fabricCanvas: fabric.Canvas,
+    img: Blob,
+    processOptions?: ImageProcessOptions,
+  ): Promise<fabric.FabricImage> {
     const url = await FileUtils.blobToDataUrl(img);
-    const fabricImg = await fabric.FabricImage.fromURL(url);
-    fabricImg.set({ left: 0, top: 0, snapAngle: OBJECT_DEFAULTS.snapAngle });
+
+    const originalImg = new Image();
+    originalImg.src = url;
+    await new Promise<void>((resolve) => {
+      originalImg.onload = () => resolve();
+      originalImg.onerror = () => resolve();
+    });
+
+    const canvasWidth = fabricCanvas.width ?? 240;
+    const canvasHeight = fabricCanvas.height ?? 96;
+
+    const fit = calculateFitScale(originalImg.width, originalImg.height, canvasWidth, canvasHeight, 10);
+
+    let finalWidth = fit.width;
+    let finalHeight = fit.height;
+    let finalSrc = url;
+
+    if (processOptions && processOptions.method !== "none") {
+      const processedCanvas = await processImageElement(originalImg, processOptions, fit.width, fit.height);
+      finalSrc = processedCanvas.toDataURL("image/png");
+    }
+
+    const fabricImg = await fabric.FabricImage.fromURL(finalSrc);
+
+    fabricImg.set({
+      left: (canvasWidth - fit.width) / 2,
+      top: (canvasHeight - fit.height) / 2,
+      width: finalWidth,
+      height: finalHeight,
+      scaleX: 1,
+      scaleY: 1,
+      snapAngle: OBJECT_DEFAULTS.snapAngle,
+      lockUniScaling: true,
+    });
+
+    const imgData: ProcessedImageData = {
+      originalBlob: img,
+      originalUrl: url,
+      originalElement: originalImg,
+      processOptions: processOptions ?? { method: "none", threshold: 50, contrast: 80 },
+      lastScale: 1,
+      lastWidth: finalWidth,
+      lastHeight: finalHeight,
+    };
+
+    (fabricImg as any)._niimImageData = imgData;
+
+    this.setupImageScalingHandler(fabricCanvas, fabricImg);
+
     fabricCanvas.add(fabricImg);
     return fabricImg;
+  }
+
+  private static setupImageScalingHandler(canvas: fabric.Canvas, fabricImg: fabric.FabricImage) {
+    const reprocessImage = async () => {
+      const imgData = (fabricImg as any)._niimImageData as ProcessedImageData | undefined;
+      if (!imgData || imgData.processOptions.method === "none") return;
+
+      const currentScale = fabricImg.scaleX ?? 1;
+      const currentWidth = Math.round((fabricImg.width ?? 0) * currentScale);
+      const currentHeight = Math.round((fabricImg.height ?? 0) * currentScale);
+
+      if (currentWidth < 1 || currentHeight < 1) return;
+
+      try {
+        const element = fabricImg.getElement();
+        if (element && element instanceof HTMLImageElement) {
+          const processedCanvas = await processImageElement(
+            element,
+            imgData.processOptions,
+            currentWidth,
+            currentHeight,
+          );
+
+          const newUrl = processedCanvas.toDataURL("image/png");
+          const newImg = await fabric.FabricImage.fromURL(newUrl);
+
+          fabricImg.set({
+            width: currentWidth,
+            height: currentHeight,
+            scaleX: 1,
+            scaleY: 1,
+          });
+          fabricImg.setElement(newImg.getElement());
+
+          imgData.lastScale = 1;
+          imgData.lastWidth = currentWidth;
+          imgData.lastHeight = currentHeight;
+
+          canvas.requestRenderAll();
+        }
+      } catch (e) {
+        console.error("Failed to reprocess image:", e);
+      }
+    };
+
+    const handler = () => {
+      reprocessImage();
+    };
+
+    fabricImg.on("modified", handler);
+    (fabricImg as any)._niimScaleHandler = handler;
   }
 
   static async addObjectFromClipboard(

@@ -26,6 +26,7 @@
   import { CanvasUtils } from "$/utils/canvas_utils";
   import DesignerShell from "$/components/DesignerShell.svelte";
   import PrintPreview from "$/components/PrintPreview.svelte";
+  import ImageImportModal from "$/components/designer-controls/ImageImportModal.svelte";
   import type { LabelPreset } from "$/types";
 
   interface Props {
@@ -45,6 +46,8 @@
   let printNow = $state<boolean>(false);
   let csvEnabled = $state<boolean>(false);
   let undoState = $state<UndoState>({ undoDisabled: false, redoDisabled: false });
+  let imageImportModalOpen = $state(false);
+  let imageImportCallback = $state<((blob: Blob) => void) | null>(null);
 
   const undo = new UndoRedo();
 
@@ -214,6 +217,20 @@
     fabricCanvas!.add(img);
     fabricCanvas!.setActiveObject(img);
     undo.push(fabricCanvas!, labelProps);
+  };
+
+  const onImageImportSubmit = async (blob: Blob, options: { method: string; threshold: number; contrast: number }) => {
+    await LabelDesignerObjectHelper.addImageBlob(fabricCanvas!, blob, {
+      method: options.method as any,
+      threshold: options.threshold,
+      contrast: options.contrast,
+    });
+    undo.push(fabricCanvas!, labelProps);
+    imageImportModalOpen = false;
+  };
+
+  const onImageImportCancel = () => {
+    imageImportModalOpen = false;
   };
 
   const onObjectPicked = (objectType: OjectType) => {
@@ -395,6 +412,11 @@
 
     window.addEventListener("hashchange", loadLabelFromUrl);
 
+    window.addEventListener("openImageImportModal", ((e: CustomEvent) => {
+      imageImportCallback = e.detail.onSubmit;
+      imageImportModalOpen = true;
+    }) as EventListener);
+
     undo.push(fabricCanvas, labelProps);
 
     fabricCanvas.on("object:moving", (e): void => {
@@ -493,6 +515,7 @@
   onDestroy(() => {
     fabricCanvas!.dispose();
     window.removeEventListener("hashchange", loadLabelFromUrl);
+    window.removeEventListener("openImageImportModal", (() => {}) as EventListener);
   });
 
   $effect(() => {
@@ -566,4 +589,8 @@
     {printNow}
     {csvEnabled}
     csvData={$csvData.data} />
+{/if}
+
+{#if imageImportModalOpen}
+  <ImageImportModal onSubmit={onImageImportSubmit} onCancel={onImageImportCancel} />
 {/if}

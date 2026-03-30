@@ -220,7 +220,9 @@ export class FileUtils {
       input.type = "file";
       input.multiple = multiple;
 
-      if (acceptExtension !== "*") {
+      if (acceptExtension === "image") {
+        input.accept = "image/*";
+      } else if (acceptExtension !== "*") {
         input.accept = `.${acceptExtension}`;
       }
 
