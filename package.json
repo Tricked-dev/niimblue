@@ -26,6 +26,7 @@
 		"bits-ui": "^2.16.4",
 		"clsx": "^2.1.1",
 		"d3-dsv": "^3.0.1",
+		"datamatrix-svg-ts": "^1.0.2",
 		"dayjs": "^1.11.19",
 		"fabric": "^7.1.0",
 		"material-icons": "^1.13.14",

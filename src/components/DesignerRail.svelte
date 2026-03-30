@@ -39,14 +39,18 @@
     onLabelSettingsOpen,
   }: Props = $props();
 
-  const btnClass = "w-8 h-8 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors";
+  const btnClass =
+    "w-8 h-8 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors";
 
   const toolButtons: { type: OjectType; icon: MaterialIcon; title: string }[] = [
     { type: "text", icon: "title", title: "Text" },
     { type: "barcode", icon: "view_week", title: "Barcode" },
     { type: "qrcode", icon: "qr_code_2", title: "QR Code" },
+    { type: "datamatrix", icon: "grid_3x3", title: "Datamatrix" },
     { type: "aruco", icon: "grid_on", title: "ArUco Marker" },
     { type: "rectangle", icon: "crop_square", title: "Rectangle" },
+    { type: "reverseBox", icon: "invert_colors", title: "Reverse Box" },
+    { type: "bar", icon: "horizontal_rule", title: "Simple Bar" },
     { type: "circle", icon: "radio_button_unchecked", title: "Circle" },
     { type: "line", icon: "remove", title: "Line" },
     { type: "image", icon: "image", title: "Image" },

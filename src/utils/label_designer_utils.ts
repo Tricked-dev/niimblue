@@ -35,11 +35,7 @@ export class LabelDesignerUtils {
     canvas.setActiveObject(newSelection);
   }
 
-  static moveSelection(
-    canvas: fabric.Canvas,
-    direction: MoveDirection,
-    ctrl?: boolean,
-  ) {
+  static moveSelection(canvas: fabric.Canvas, direction: MoveDirection, ctrl?: boolean) {
     const selected: fabric.FabricObject[] = canvas.getActiveObjects();
     const amount = ctrl ? 1 : GRID_SIZE;
 
@@ -69,21 +65,44 @@ export class LabelDesignerUtils {
   static isAnyInputFocused(canvas: fabric.Canvas): boolean {
     const focused: Element | null = document.activeElement;
 
-    if (
-      focused !== null &&
-      (focused.tagName === "INPUT" || focused.tagName === "TEXTAREA")
-    ) {
+    if (focused !== null && (focused.tagName === "INPUT" || focused.tagName === "TEXTAREA")) {
       return true;
     }
     const selected: fabric.FabricObject[] = canvas.getActiveObjects();
-    const editing = selected.some(
-      (obj) => obj instanceof fabric.IText && obj.isEditing,
-    );
+    const editing = selected.some((obj) => obj instanceof fabric.IText && obj.isEditing);
 
     if (editing) {
       return true;
     }
 
     return false;
+  }
+
+  static resizeSelection(canvas: fabric.Canvas, direction: MoveDirection, large?: boolean): void {
+    const amount = large ? GRID_SIZE : 1;
+    const active = canvas.getActiveObject();
+    if (!active) return;
+
+    const targets =
+      active instanceof fabric.ActiveSelection ? (active as fabric.ActiveSelection).getObjects() : [active];
+
+    for (const obj of targets) {
+      switch (direction) {
+        case "right":
+          obj.set({ width: Math.max(1, (obj.width ?? 1) + amount) });
+          break;
+        case "left":
+          obj.set({ width: Math.max(1, (obj.width ?? 1) - amount) });
+          break;
+        case "down":
+          obj.set({ height: Math.max(1, (obj.height ?? 1) + amount) });
+          break;
+        case "up":
+          obj.set({ height: Math.max(1, (obj.height ?? 1) - amount) });
+          break;
+      }
+      obj.setCoords();
+    }
+    canvas.requestRenderAll();
   }
 }

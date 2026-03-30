@@ -6,7 +6,19 @@ export type ConnectionState = "connecting" | "connected" | "disconnected";
 export type ConnectionType = "bluetooth" | "serial" | "capacitor-ble";
 
 export type LabelUnit = "mm" | "px";
-export type OjectType = "text" | "rectangle" | "line" | "circle" | "image" | "qrcode" | "barcode" | "aruco" | "pdf";
+export type OjectType =
+  | "text"
+  | "rectangle"
+  | "line"
+  | "circle"
+  | "image"
+  | "qrcode"
+  | "barcode"
+  | "aruco"
+  | "pdf"
+  | "datamatrix"
+  | "reverseBox"
+  | "bar";
 export type PostProcessType = "threshold" | "dither" | "bayer";
 export type MoveDirection = "up" | "down" | "left" | "right";
 export type LabelShape = "rect" | "rounded_rect" | "circle";
@@ -106,6 +118,16 @@ export const AppConfigSchema = z.object({
   pageDelay: z.number().gte(0).optional(),
   iconListMode: z.enum(["user", "pack", "both"]),
   packetIntervalMs: z.number().gte(0).optional(),
+  /** Grid size for move snapping in pixels (0 = disabled) */
+  moveSnap: z.number().gte(0).default(5),
+  /** Grid size for resize snapping in pixels (0 = disabled) */
+  resizeSnap: z.number().gte(0).default(5),
+  /** If true, resizeSnap is locked to moveSnap value */
+  snapLock: z.boolean().default(true),
+  /** Show visual grid on canvas */
+  visualGrid: z.boolean().default(false),
+  /** Color used for non-printable areas (tail, margins) */
+  nonPrintableColor: z.string().default("#CFCFCF"),
 });
 
 export const UserIconSchema = z.object({
@@ -113,12 +135,11 @@ export const UserIconSchema = z.object({
   data: z.string(),
 });
 
-export const UserFontSchema = z
-  .object({
-    gzippedDataB64: z.string(),
-    family: z.string(),
-    mimeType: z.string(),
-  });
+export const UserFontSchema = z.object({
+  gzippedDataB64: z.string(),
+  family: z.string(),
+  mimeType: z.string(),
+});
 
 export type CsvParams = z.infer<typeof CsvParamsSchema>;
 export type UserIcon = z.infer<typeof UserIconSchema>;

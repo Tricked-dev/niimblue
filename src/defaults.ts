@@ -28,10 +28,14 @@ export const configureFabric = () => {
 
 /** Default presets for LabelPropsEditor */
 export const DEFAULT_LABEL_PRESETS: LabelPreset[] = [
-  // 203dpi
+  // 203 dpi (8 dpmm)
   { width: 40, height: 12, unit: "mm", dpmm: 8, printDirection: "left", shape: "rect" },
+  { width: 50, height: 25, unit: "mm", dpmm: 8, printDirection: "left", shape: "rect", title: "50x25mm" },
   { width: 50, height: 30, unit: "mm", dpmm: 8, printDirection: "top", shape: "rect" },
-  // 300dpi
+  { width: 76, height: 25, unit: "mm", dpmm: 8, printDirection: "left", shape: "rect", title: "76x25mm" },
+  { width: 76, height: 50, unit: "mm", dpmm: 8, printDirection: "top", shape: "rect", title: "76x50mm" },
+  { width: 100, height: 50, unit: "mm", dpmm: 8, printDirection: "top", shape: "rect", title: "100x50mm" },
+  // 300 dpi (11.81 dpmm)
   { width: 40, height: 12, unit: "mm", dpmm: 11.81, printDirection: "left", shape: "rect", title: "40x12mm 300dpi" },
   { width: 50, height: 30, unit: "mm", dpmm: 11.81, printDirection: "top", shape: "rect", title: "50x30mm 300dpi" },
 ];
@@ -92,6 +96,11 @@ export const THUMBNAIL_QUALITY = 0.7;
 export const APP_CONFIG_DEFAULTS: AppConfig = {
   fitMode: "stretch",
   iconListMode: "both",
+  moveSnap: 5,
+  resizeSnap: 5,
+  snapLock: true,
+  visualGrid: false,
+  nonPrintableColor: "#CFCFCF",
 };
 
 export const CSV_DEFAULT = "var1,var2\n123,456\n777,888";

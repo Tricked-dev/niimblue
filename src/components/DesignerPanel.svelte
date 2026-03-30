@@ -3,11 +3,13 @@
   import { Barcode } from "$/fabric-object/barcode";
   import { QRCode } from "$/fabric-object/qrcode";
   import { ArUcoMarker } from "$/fabric-object/aruco";
-  import { connectionState } from "$/stores";
+  import { Datamatrix } from "$/fabric-object/datamatrix";
+  import { connectionState, appConfig } from "$/stores";
   import TextParamsControls from "$/components/designer-controls/TextParamsControls.svelte";
   import BarcodeParamsControls from "$/components/designer-controls/BarcodeParamsControls.svelte";
   import QRCodeParamsControls from "$/components/designer-controls/QRCodeParamsControls.svelte";
   import ArUcoParamsControls from "$/components/designer-controls/ArUcoParamsControls.svelte";
+  import DatamatrixParamsControls from "$/components/designer-controls/DatamatrixParamsControls.svelte";
   import VectorParamsControls from "$/components/designer-controls/VectorParamsControls.svelte";
   import GenericObjectParamsControls from "$/components/designer-controls/GenericObjectParamsControls.svelte";
   import VariableInsertControl from "$/components/designer-controls/VariableInsertControl.svelte";
@@ -35,26 +37,36 @@
     sheet = false,
   }: Props = $props();
 
-  const hasText    = $derived(selectedObject instanceof fabric.IText);
+  const hasText = $derived(selectedObject instanceof fabric.IText);
   const hasBarcode = $derived(selectedObject instanceof Barcode);
-  const hasQR      = $derived(selectedObject instanceof QRCode);
-  const hasArUco   = $derived(selectedObject instanceof ArUcoMarker);
-  const hasVar     = $derived(
+  const hasQR = $derived(selectedObject instanceof QRCode);
+  const hasArUco = $derived(selectedObject instanceof ArUcoMarker);
+  const hasDatamatrix = $derived(selectedObject instanceof Datamatrix);
+  const hasVar = $derived(
     selectedObject instanceof fabric.IText ||
-    selectedObject instanceof QRCode ||
-    (selectedObject instanceof Barcode && (selectedObject as any).encoding === "CODE128B")
+      selectedObject instanceof QRCode ||
+      (selectedObject instanceof Barcode && (selectedObject as any).encoding === "CODE128B"),
   );
 
-  const sectionHeaderClass = "flex items-center justify-between px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500";
-  const deleteButtonClass = "w-6 h-6 flex items-center justify-center rounded text-red-400 hover:text-red-300 hover:bg-zinc-800 transition-colors";
-  const cloneButtonClass = "w-6 h-6 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors";
+  const sectionHeaderClass =
+    "flex items-center justify-between px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500";
+  const deleteButtonClass =
+    "w-6 h-6 flex items-center justify-center rounded text-red-400 hover:text-red-300 hover:bg-zinc-800 transition-colors";
+  const cloneButtonClass =
+    "w-6 h-6 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors";
 
   const objectSectionTitle = $derived(
-    hasText ? "Text"
-    : hasBarcode ? "Barcode"
-    : hasQR ? "QR Code"
-    : hasArUco ? "ArUco"
-    : "Object"
+    hasText
+      ? "Text"
+      : hasBarcode
+        ? "Barcode"
+        : hasQR
+          ? "QR Code"
+          : hasArUco
+            ? "ArUco"
+            : hasDatamatrix
+              ? "Datamatrix"
+              : "Object",
   );
 
   // Mobile sheet state
@@ -70,26 +82,47 @@
   <!-- Desktop panel -->
   <aside class="w-[220px] shrink-0 bg-zinc-950 border-l border-zinc-800 flex flex-col overflow-hidden">
     <div class="overflow-y-auto flex-1">
-
       {#if selectedCount > 0}
         <section class="border-b border-zinc-800">
           <div class={sectionHeaderClass}>
             <span>{objectSectionTitle}</span>
             <div class="flex items-center gap-1">
               <button class={cloneButtonClass} onclick={onCloneSelected} title="Clone">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
+                  ><path
+                    d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" /></svg>
               </button>
               <button class={deleteButtonClass} onclick={onDeleteSelected} title="Delete">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
+                  ><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" /></svg>
               </button>
             </div>
           </div>
           <div class="px-3 pb-3 flex flex-col gap-2">
-            {#if hasText}<TextParamsControls selectedText={selectedObject as fabric.IText} {editRevision} valueUpdated={onValueUpdated} />{/if}
-            {#if hasBarcode}<BarcodeParamsControls selectedBarcode={selectedObject as Barcode} {editRevision} valueUpdated={onValueUpdated} />{/if}
-            {#if hasQR}<QRCodeParamsControls selectedQRCode={selectedObject as QRCode} {editRevision} valueUpdated={onValueUpdated} />{/if}
-            {#if hasArUco}<ArUcoParamsControls selectedArUco={selectedObject as ArUcoMarker} {editRevision} valueUpdated={onValueUpdated} />{/if}
-            {#if selectedObject}<VectorParamsControls {selectedObject} {editRevision} valueUpdated={onValueUpdated} />{/if}
+            {#if hasText}<TextParamsControls
+                selectedText={selectedObject as fabric.IText}
+                {editRevision}
+                valueUpdated={onValueUpdated} />{/if}
+            {#if hasBarcode}<BarcodeParamsControls
+                selectedBarcode={selectedObject as Barcode}
+                {editRevision}
+                valueUpdated={onValueUpdated} />{/if}
+            {#if hasQR}<QRCodeParamsControls
+                selectedQRCode={selectedObject as QRCode}
+                {editRevision}
+                valueUpdated={onValueUpdated} />{/if}
+            {#if hasArUco}<ArUcoParamsControls
+                selectedArUco={selectedObject as ArUcoMarker}
+                {editRevision}
+                valueUpdated={onValueUpdated} />{/if}
+            {#if hasDatamatrix}<DatamatrixParamsControls
+                selectedDatamatrix={selectedObject as Datamatrix}
+                {editRevision}
+                valueUpdated={onValueUpdated} />{/if}
+            {#if selectedObject}<VectorParamsControls
+                {selectedObject}
+                {editRevision}
+                valueUpdated={onValueUpdated} />{/if}
             {#if hasVar}<VariableInsertControl {selectedObject} valueUpdated={onValueUpdated} />{/if}
           </div>
         </section>
@@ -118,6 +151,97 @@
         </div>
       </section>
 
+      <!-- Settings section -->
+      <section class="border-b border-zinc-800">
+        <div class={sectionHeaderClass}>
+          <span>Settings</span>
+        </div>
+        <div class="px-3 pb-3 flex flex-col gap-3">
+          <!-- Visual Grid toggle -->
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span class="text-xs text-zinc-400">Visual grid</span>
+            <button
+              class="w-8 h-4 rounded-full transition-colors relative {$appConfig.visualGrid
+                ? 'bg-blue-600'
+                : 'bg-zinc-700'}"
+              onclick={() => appConfig.update((c) => ({ ...c, visualGrid: !c.visualGrid }))}>
+              <span
+                class="absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform {$appConfig.visualGrid
+                  ? 'translate-x-4'
+                  : ''}"></span>
+            </button>
+          </label>
+
+          <!-- Move snap -->
+          <div>
+            <label class="block text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Move snap (px)</label>
+            <input
+              class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+              type="number"
+              min="0"
+              max="50"
+              value={$appConfig.moveSnap}
+              oninput={(e) => {
+                const v = e.currentTarget.valueAsNumber;
+                appConfig.update((c) => ({
+                  ...c,
+                  moveSnap: isNaN(v) ? 0 : v,
+                  resizeSnap: c.snapLock ? (isNaN(v) ? 0 : v) : c.resizeSnap,
+                }));
+              }} />
+          </div>
+
+          <!-- Snap lock toggle -->
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span class="text-xs text-zinc-400">Lock snap values</span>
+            <button
+              class="w-8 h-4 rounded-full transition-colors relative {$appConfig.snapLock
+                ? 'bg-blue-600'
+                : 'bg-zinc-700'}"
+              onclick={() => appConfig.update((c) => ({ ...c, snapLock: !c.snapLock }))}>
+              <span
+                class="absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform {$appConfig.snapLock
+                  ? 'translate-x-4'
+                  : ''}"></span>
+            </button>
+          </label>
+
+          {#if !$appConfig.snapLock}
+            <div>
+              <label class="block text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Resize snap (px)</label>
+              <input
+                class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+                type="number"
+                min="0"
+                max="50"
+                value={$appConfig.resizeSnap}
+                oninput={(e) => {
+                  const v = e.currentTarget.valueAsNumber;
+                  appConfig.update((c) => ({ ...c, resizeSnap: isNaN(v) ? 0 : v }));
+                }} />
+            </div>
+          {/if}
+
+          <!-- Factory reset -->
+          <button
+            class="w-full h-7 rounded border border-red-800 text-red-400 text-xs hover:bg-red-900/30 transition-colors"
+            onclick={() => {
+              if (confirm("Reset all settings to defaults?")) {
+                appConfig.set({
+                  fitMode: "stretch",
+                  iconListMode: "both",
+                  moveSnap: 5,
+                  resizeSnap: 5,
+                  snapLock: true,
+                  visualGrid: false,
+                  nonPrintableColor: "#CFCFCF",
+                });
+              }
+            }}>
+            Factory Reset
+          </button>
+        </div>
+      </section>
     </div>
   </aside>
 {:else}
@@ -125,19 +249,23 @@
   <div
     class="bg-zinc-900 border-t border-zinc-800 transition-[height] duration-200"
     style="height: {sheetExpanded ? '50vh' : '36px'}; overflow: hidden;">
-
     <!-- Handle + tabs row -->
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
       class="relative flex items-center h-9 border-b border-zinc-800 px-2 cursor-pointer select-none"
-      onclick={() => sheetExpanded = !sheetExpanded}>
+      onclick={() => (sheetExpanded = !sheetExpanded)}>
       <div class="absolute left-1/2 -translate-x-1/2 top-1.5 w-8 h-1 rounded-full bg-zinc-700"></div>
       {#if sheetExpanded}
-        {#each (["object", "position", "printer"] as const) as tab}
+        {#each ["object", "position", "printer"] as const as tab}
           <button
-            class="px-3 h-full text-xs border-b-2 transition-colors z-10 {activeTab === tab ? 'border-blue-500 text-zinc-100' : 'border-transparent text-zinc-500 hover:text-zinc-300'}"
-            onclick={(e) => { e.stopPropagation(); activeTab = tab; sheetExpanded = true; }}
-          >{tab === "object" ? "Object" : tab === "position" ? "Position" : "Printer"}</button>
+            class="px-3 h-full text-xs border-b-2 transition-colors z-10 {activeTab === tab
+              ? 'border-blue-500 text-zinc-100'
+              : 'border-transparent text-zinc-500 hover:text-zinc-300'}"
+            onclick={(e) => {
+              e.stopPropagation();
+              activeTab = tab;
+              sheetExpanded = true;
+            }}>{tab === "object" ? "Object" : tab === "position" ? "Position" : "Printer"}</button>
         {/each}
       {:else}
         <span class="text-[10px] text-zinc-500 ml-auto">
@@ -155,19 +283,37 @@
               <span class="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{objectSectionTitle}</span>
               <div class="flex items-center gap-1">
                 <button class={cloneButtonClass} onclick={onCloneSelected} title="Clone">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
+                    ><path
+                      d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" /></svg>
                 </button>
                 <button class={deleteButtonClass} onclick={onDeleteSelected} title="Delete">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
+                    ><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" /></svg>
                 </button>
               </div>
             </div>
             <div class="flex flex-col gap-2">
-              {#if hasText}<TextParamsControls selectedText={selectedObject as fabric.IText} {editRevision} valueUpdated={onValueUpdated} />{/if}
-              {#if hasBarcode}<BarcodeParamsControls selectedBarcode={selectedObject as Barcode} {editRevision} valueUpdated={onValueUpdated} />{/if}
-              {#if hasQR}<QRCodeParamsControls selectedQRCode={selectedObject as QRCode} {editRevision} valueUpdated={onValueUpdated} />{/if}
-              {#if hasArUco}<ArUcoParamsControls selectedArUco={selectedObject as ArUcoMarker} {editRevision} valueUpdated={onValueUpdated} />{/if}
-              {#if selectedObject}<VectorParamsControls {selectedObject} {editRevision} valueUpdated={onValueUpdated} />{/if}
+              {#if hasText}<TextParamsControls
+                  selectedText={selectedObject as fabric.IText}
+                  {editRevision}
+                  valueUpdated={onValueUpdated} />{/if}
+              {#if hasBarcode}<BarcodeParamsControls
+                  selectedBarcode={selectedObject as Barcode}
+                  {editRevision}
+                  valueUpdated={onValueUpdated} />{/if}
+              {#if hasQR}<QRCodeParamsControls
+                  selectedQRCode={selectedObject as QRCode}
+                  {editRevision}
+                  valueUpdated={onValueUpdated} />{/if}
+              {#if hasArUco}<ArUcoParamsControls
+                  selectedArUco={selectedObject as ArUcoMarker}
+                  {editRevision}
+                  valueUpdated={onValueUpdated} />{/if}
+              {#if selectedObject}<VectorParamsControls
+                  {selectedObject}
+                  {editRevision}
+                  valueUpdated={onValueUpdated} />{/if}
               {#if hasVar}<VariableInsertControl {selectedObject} valueUpdated={onValueUpdated} />{/if}
             </div>
           {:else}
@@ -184,6 +330,5 @@
         {/if}
       </div>
     {/if}
-
   </div>
 {/if}

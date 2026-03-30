@@ -5,7 +5,7 @@
   import { Barcode } from "$/fabric-object/barcode";
   import { QRCode } from "$/fabric-object/qrcode";
   import { iconCodepoints, type MaterialIcon } from "$/styles/mdi_icons";
-  import { automation, connectionState, csvData, labelDpmm, loadedFonts } from "$/stores";
+  import { automation, connectionState, csvData, labelDpmm, loadedFonts, appConfig } from "$/stores";
   import {
     ExportedLabelTemplateSchema,
     type ExportedLabelTemplate,
@@ -89,9 +89,16 @@
   const onKeyDown = (e: KeyboardEvent) => {
     const key: string = e.key.toLowerCase();
     const cmdOrCtrl = e.metaKey || e.ctrlKey;
+    const shift = e.shiftKey;
 
     if (key === "escape") {
       discardSelection();
+      return;
+    }
+
+    if (cmdOrCtrl && key === "p") {
+      e.preventDefault();
+      previewOpened = true;
       return;
     }
 
@@ -100,11 +107,52 @@
     }
 
     if (key.startsWith("arrow")) {
-      moveSelected(key.slice("arrow".length) as MoveDirection, cmdOrCtrl);
+      e.preventDefault();
+      const dir = key.slice("arrow".length) as MoveDirection;
+      if (shift) {
+        LabelDesignerUtils.resizeSelection(fabricCanvas!, dir, cmdOrCtrl);
+      } else {
+        moveSelected(dir, cmdOrCtrl);
+      }
       return;
     }
 
-    if (e.repeat) {
+    if (e.repeat) return;
+
+    if (!cmdOrCtrl && !shift && key >= "1" && key <= "9") {
+      const quickTypes: OjectType[] = [
+        "text",
+        "barcode",
+        "qrcode",
+        "datamatrix",
+        "aruco",
+        "rectangle",
+        "reverseBox",
+        "bar",
+        "circle",
+      ];
+      const idx = parseInt(key, 10) - 1;
+      if (idx < quickTypes.length) {
+        const obj = LabelDesignerObjectHelper.addObject(fabricCanvas!, quickTypes[idx]);
+        if (obj) {
+          fabricCanvas!.setActiveObject(obj);
+          selectedObject = obj;
+          selectedCount = 1;
+          undo.push(fabricCanvas!, labelProps);
+        }
+      }
+      return;
+    }
+
+    if (cmdOrCtrl && key === "a") {
+      e.preventDefault();
+      const objs = fabricCanvas!.getObjects();
+      if (objs.length > 0) {
+        fabricCanvas!.setActiveObject(new fabric.ActiveSelection(objs, { canvas: fabricCanvas! }));
+        fabricCanvas!.requestRenderAll();
+        selectedObject = fabricCanvas!.getActiveObject() as fabric.FabricObject | undefined;
+        selectedCount = objs.length;
+      }
       return;
     }
 
@@ -114,7 +162,7 @@
       return;
     }
 
-    if ((cmdOrCtrl && key === "y") || (cmdOrCtrl && e.shiftKey && key === "z")) {
+    if ((cmdOrCtrl && key === "y") || (cmdOrCtrl && shift && key === "z")) {
       e.preventDefault();
       if (!undoState.redoDisabled) undo.redo();
       return;
@@ -323,14 +371,22 @@
         onUpdateLabelProps({
           printDirection: initialPreset.printDirection,
           size: {
-            width: Math.floor(initialPreset.unit === "mm" ? initialPreset.width * initialPreset.dpmm : initialPreset.width),
-            height: Math.floor(initialPreset.unit === "mm" ? initialPreset.height * initialPreset.dpmm : initialPreset.height),
+            width: Math.floor(
+              initialPreset.unit === "mm" ? initialPreset.width * initialPreset.dpmm : initialPreset.width,
+            ),
+            height: Math.floor(
+              initialPreset.unit === "mm" ? initialPreset.height * initialPreset.dpmm : initialPreset.height,
+            ),
           },
           shape: initialPreset.shape ?? "rect",
           split: initialPreset.split ?? "none",
           splitParts: initialPreset.splitParts ?? 2,
           tailPos: initialPreset.tailPos ?? "right",
-          tailLength: Math.floor(initialPreset.unit === "mm" ? (initialPreset.tailLength ?? 0) * initialPreset.dpmm : initialPreset.tailLength ?? 0),
+          tailLength: Math.floor(
+            initialPreset.unit === "mm"
+              ? (initialPreset.tailLength ?? 0) * initialPreset.dpmm
+              : (initialPreset.tailLength ?? 0),
+          ),
           mirror: initialPreset.mirror ?? "none",
         });
       }
@@ -342,15 +398,29 @@
     undo.push(fabricCanvas, labelProps);
 
     fabricCanvas.on("object:moving", (e): void => {
-      if (e.target && e.target.left !== undefined && e.target.top !== undefined) {
+      const snap = $appConfig.moveSnap;
+      if (snap > 0 && e.target && e.target.left !== undefined && e.target.top !== undefined) {
         e.target.set({
-          left: Math.round(e.target.left / GRID_SIZE) * GRID_SIZE,
-          top: Math.round(e.target.top / GRID_SIZE) * GRID_SIZE,
+          left: Math.round(e.target.left / snap) * snap,
+          top: Math.round(e.target.top / snap) * snap,
         });
       }
     });
 
-    fabricCanvas.on("object:modified", (): void => {
+    fabricCanvas.on("object:modified", (e): void => {
+      const snap = $appConfig.resizeSnap;
+      if (snap > 0 && e.target) {
+        const obj = e.target;
+        const snapped = {
+          left: Math.round(obj.left / snap) * snap,
+          top: Math.round(obj.top / snap) * snap,
+          width: Math.max(snap, Math.round((obj.width * obj.scaleX) / snap) * snap),
+          height: Math.max(snap, Math.round((obj.height * obj.scaleY) / snap) * snap),
+        };
+        obj.set({ ...snapped, scaleX: 1, scaleY: 1 });
+        obj.setCoords();
+        fabricCanvas.requestRenderAll();
+      }
       undo.push(fabricCanvas!, labelProps);
     });
 
@@ -434,6 +504,14 @@
   });
 
   $effect(() => {
+    fabricCanvas?.setGrid($appConfig.visualGrid, $appConfig.moveSnap);
+  });
+
+  $effect(() => {
+    fabricCanvas?.setNonPrintableColor($appConfig.nonPrintableColor ?? "#CFCFCF");
+  });
+
+  $effect(() => {
     if ($loadedFonts) renderOnFontsChanged();
   });
 </script>
@@ -467,8 +545,7 @@
   onValueUpdated={controlValueUpdated}
   onLabelPropsChange={onUpdateLabelProps}
   onDeleteSelected={deleteSelected}
-  onCloneSelected={cloneSelected}
->
+  onCloneSelected={cloneSelected}>
   <!-- Canvas element lives here so bind:this stays in LabelDesigner scope -->
   <div
     class="border bg-zinc-800/50 shadow-lg"
@@ -476,8 +553,7 @@
     class:border-t-red-500={labelProps.printDirection === "top"}
     class:border-l-2={labelProps.printDirection === "left"}
     class:border-t-2={labelProps.printDirection === "top"}
-    class:border-zinc-700={labelProps.printDirection !== "left" && labelProps.printDirection !== "top"}
-  >
+    class:border-zinc-700={labelProps.printDirection !== "left" && labelProps.printDirection !== "top"}>
     <canvas bind:this={htmlCanvas} style="image-rendering:pixelated;display:block;"></canvas>
   </div>
 </DesignerShell>

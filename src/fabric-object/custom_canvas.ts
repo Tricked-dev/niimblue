@@ -23,7 +23,7 @@ export class CustomCanvas extends fabric.Canvas {
   private readonly SEPARATOR_LINE_WIDTH = 2;
   private readonly ROUND_RADIUS = 10;
   private readonly TAIL_WIDTH = 40;
-  private readonly GRAY = "#CFCFCF";
+  private GRAY = "#CFCFCF";
   private readonly MIRROR_GHOST_COLOR = "rgba(0, 0, 0, 0.3)";
   private customBackground: boolean = true;
   private highlightMirror: boolean = true;
@@ -37,11 +37,10 @@ export class CustomCanvas extends fabric.Canvas {
   private middleDragStartScroll: { x: number; y: number } = { x: 0, y: 0 };
   private canvasContainerPadding: number = 3000;
   private middleClickActive: boolean = false;
+  private gridEnabled: boolean = false;
+  private gridSize: number = 5;
 
-  constructor(
-    el?: string | HTMLCanvasElement,
-    options?: fabric.TOptions<fabric.CanvasOptions>,
-  ) {
+  constructor(el?: string | HTMLCanvasElement, options?: fabric.TOptions<fabric.CanvasOptions>) {
     super(el, options);
     this.setupZoom();
     this.preserveObjectStacking = true;
@@ -84,61 +83,88 @@ export class CustomCanvas extends fabric.Canvas {
 
   /** Zoom via scroll wheel even when cursor is over the wrapper (not the canvas) */
   private setupWrapperWheel(wrapper: HTMLElement) {
-    wrapper.addEventListener("wheel", (e: WheelEvent) => {
-      // Skip if the event originated from inside the canvas container —
-      // fabric's own handler already deals with that.
-      const canvasContainer = this.getElement().parentElement;
-      if (canvasContainer && canvasContainer.contains(e.target as Node)) return;
+    wrapper.addEventListener(
+      "wheel",
+      (e: WheelEvent) => {
+        // Skip if the event originated from inside the canvas container —
+        // fabric's own handler already deals with that.
+        const canvasContainer = this.getElement().parentElement;
+        if (canvasContainer && canvasContainer.contains(e.target as Node)) return;
 
-      e.preventDefault();
+        e.preventDefault();
 
-      if (e.shiftKey && !e.ctrlKey && !e.altKey) {
-        wrapper.scrollLeft += e.deltaY;
-        return;
-      }
+        if (e.shiftKey && !e.ctrlKey && !e.altKey) {
+          wrapper.scrollLeft += e.deltaY;
+          return;
+        }
 
-      // Use canvas position as zoom reference even when cursor is outside
-      const canvasRect = this.getElement().getBoundingClientRect();
-      const canvasX = e.clientX - canvasRect.left;
-      const canvasY = e.clientY - canvasRect.top;
+        // Use canvas position as zoom reference even when cursor is outside
+        const canvasRect = this.getElement().getBoundingClientRect();
+        const canvasX = e.clientX - canvasRect.left;
+        const canvasY = e.clientY - canvasRect.top;
 
-      const speed = e.ctrlKey || e.altKey ? 3 : 1;
-      const step = 0.05 * speed;
-      const factor = e.deltaY > 0 ? 1 - step : 1 + step;
-      this.zoomAroundPoint(canvasX, canvasY, factor);
-    }, { passive: false });
+        const speed = e.ctrlKey || e.altKey ? 3 : 1;
+        const step = 0.05 * speed;
+        const factor = e.deltaY > 0 ? 1 - step : 1 + step;
+        this.zoomAroundPoint(canvasX, canvasY, factor);
+      },
+      { passive: false },
+    );
   }
 
   /** Middle-click drag → pan the scroll wrapper */
   private setupMiddleDrag(wrapper: HTMLElement) {
     // Prevent X11 primary-selection paste on Linux using multiple interception points.
     // auxclick covers modern browsers; mouseup covers older/distro-specific behaviour.
-    window.addEventListener("auxclick", (e: MouseEvent) => {
-      if (e.button === 1) e.preventDefault();
-    }, { capture: true });
-    window.addEventListener("mouseup", (e: MouseEvent) => {
-      if (e.button === 1) e.preventDefault();
-    }, { capture: true });
+    window.addEventListener(
+      "auxclick",
+      (e: MouseEvent) => {
+        if (e.button === 1) e.preventDefault();
+      },
+      { capture: true },
+    );
+    window.addEventListener(
+      "mouseup",
+      (e: MouseEvent) => {
+        if (e.button === 1) e.preventDefault();
+      },
+      { capture: true },
+    );
     // Block paste event when middle-click is active (belt-and-suspenders).
-    window.addEventListener("paste", (e: ClipboardEvent) => {
-      if (this.middleClickActive) { e.preventDefault(); e.stopPropagation(); }
-    }, { capture: true });
+    window.addEventListener(
+      "paste",
+      (e: ClipboardEvent) => {
+        if (this.middleClickActive) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      },
+      { capture: true },
+    );
 
     // Intercept before fabric sees the event, preventing accidental object creation.
-    window.addEventListener("mousedown", (e: MouseEvent) => {
-      if (e.button !== 1) return;
-      this.middleClickActive = true;
-      e.preventDefault();
-    }, { capture: true });
+    window.addEventListener(
+      "mousedown",
+      (e: MouseEvent) => {
+        if (e.button !== 1) return;
+        this.middleClickActive = true;
+        e.preventDefault();
+      },
+      { capture: true },
+    );
 
-    wrapper.addEventListener("mousedown", (e: MouseEvent) => {
-      if (e.button !== 1) return;
-      e.stopPropagation();
-      this.isMiddleDragging = true;
-      this.middleDragStartClient = { x: e.clientX, y: e.clientY };
-      this.middleDragStartScroll = { x: wrapper.scrollLeft, y: wrapper.scrollTop };
-      wrapper.style.cursor = "grabbing";
-    }, { capture: true });
+    wrapper.addEventListener(
+      "mousedown",
+      (e: MouseEvent) => {
+        if (e.button !== 1) return;
+        e.stopPropagation();
+        this.isMiddleDragging = true;
+        this.middleDragStartClient = { x: e.clientX, y: e.clientY };
+        this.middleDragStartScroll = { x: wrapper.scrollLeft, y: wrapper.scrollTop };
+        wrapper.style.cursor = "grabbing";
+      },
+      { capture: true },
+    );
 
     document.addEventListener("mousemove", (e: MouseEvent) => {
       if (!this.isMiddleDragging || !this.scrollWrapper) return;
@@ -153,7 +179,9 @@ export class CustomCanvas extends fabric.Canvas {
       this.isMiddleDragging = false;
       if (this.scrollWrapper) this.scrollWrapper.style.cursor = "";
       // Keep paste suppression active briefly to catch late-firing X11 paste events
-      setTimeout(() => { this.middleClickActive = false; }, 100);
+      setTimeout(() => {
+        this.middleClickActive = false;
+      }, 100);
     });
   }
 
@@ -164,10 +192,7 @@ export class CustomCanvas extends fabric.Canvas {
         this.pinchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (this.pinchPointers.size === 2) {
           const pts = Array.from(this.pinchPointers.values());
-          this.pinchStartDist = Math.hypot(
-            pts[1].x - pts[0].x,
-            pts[1].y - pts[0].y,
-          );
+          this.pinchStartDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
           this.pinchStartZoom = this.virtualZoomRatio;
         }
       },
@@ -224,7 +249,7 @@ export class CustomCanvas extends fabric.Canvas {
       const newCanvasContentY = P + Math.max(0, (wrapH - newCssH) / 2);
       // Keep cursor at same screen position
       this.scrollWrapper.scrollLeft = newCanvasContentX - oldCanvasScreenX - canvasX + labelPxX * newZoom;
-      this.scrollWrapper.scrollTop  = newCanvasContentY - oldCanvasScreenY - canvasY + labelPxY * newZoom;
+      this.scrollWrapper.scrollTop = newCanvasContentY - oldCanvasScreenY - canvasY + labelPxY * newZoom;
     } else {
       this.virtualZoom(newZoom);
     }
@@ -272,7 +297,7 @@ export class CustomCanvas extends fabric.Canvas {
     // Reading scrollWidth/scrollHeight after setting CSS dimensions triggers a
     // synchronous reflow, giving the true content size — no need to predict it.
     this.scrollWrapper.scrollLeft = (this.scrollWrapper.scrollWidth - wrapW) / 2;
-    this.scrollWrapper.scrollTop  = (this.scrollWrapper.scrollHeight - wrapH) / 2;
+    this.scrollWrapper.scrollTop = (this.scrollWrapper.scrollHeight - wrapH) / 2;
   }
 
   setLabelProps(value: LabelProps) {
@@ -286,6 +311,17 @@ export class CustomCanvas extends fabric.Canvas {
 
   setHighlightMirror(value: boolean) {
     this.highlightMirror = value;
+  }
+
+  setGrid(enabled: boolean, size: number = 5) {
+    this.gridEnabled = enabled;
+    this.gridSize = size;
+    this.requestRenderAll();
+  }
+
+  setNonPrintableColor(color: string) {
+    this.GRAY = color;
+    this.requestRenderAll();
   }
 
   /** Get label bounds without tail */
@@ -327,8 +363,7 @@ export class CustomCanvas extends fabric.Canvas {
       let lastY: number = bb.startY;
 
       for (let i = 1; i < splitParts; i++) {
-        const y =
-          bb.startY + segmentHeight * i - this.SEPARATOR_LINE_WIDTH / 2 + 1;
+        const y = bb.startY + segmentHeight * i - this.SEPARATOR_LINE_WIDTH / 2 + 1;
         points.push(y);
         segments.push({ start: lastY, end: y });
         lastY = y;
@@ -342,8 +377,7 @@ export class CustomCanvas extends fabric.Canvas {
       let lastX: number = bb.startX;
 
       for (let i = 1; i < splitParts; i++) {
-        const x =
-          bb.startX + segmentWidth * i - this.SEPARATOR_LINE_WIDTH / 2 + 1;
+        const x = bb.startX + segmentWidth * i - this.SEPARATOR_LINE_WIDTH / 2 + 1;
         points.push(x);
         segments.push({ start: lastX, end: x });
         lastX = x;
@@ -393,10 +427,7 @@ export class CustomCanvas extends fabric.Canvas {
     ctx.fillStyle = this.GRAY;
 
     ctx.beginPath();
-    if (
-      this.labelProps.tailLength !== undefined &&
-      this.labelProps.tailLength > 0
-    ) {
+    if (this.labelProps.tailLength !== undefined && this.labelProps.tailLength > 0) {
       if (this.labelProps.tailPos === "right") {
         ctx.rect(
           bb.endX - roundRadius,
@@ -412,19 +443,9 @@ export class CustomCanvas extends fabric.Canvas {
           this.height - bb.endY + roundRadius,
         );
       } else if (this.labelProps.tailPos === "left") {
-        ctx.rect(
-          0,
-          bb.endY / 2 - this.TAIL_WIDTH / 2,
-          bb.startX + roundRadius,
-          this.TAIL_WIDTH,
-        );
+        ctx.rect(0, bb.endY / 2 - this.TAIL_WIDTH / 2, bb.startX + roundRadius, this.TAIL_WIDTH);
       } else if (this.labelProps.tailPos === "top") {
-        ctx.rect(
-          bb.endX / 2 - this.TAIL_WIDTH / 2,
-          0,
-          this.TAIL_WIDTH,
-          bb.startY + roundRadius,
-        );
+        ctx.rect(bb.endX / 2 - this.TAIL_WIDTH / 2, 0, this.TAIL_WIDTH, bb.startY + roundRadius);
       }
     }
     ctx.fill();
@@ -439,28 +460,12 @@ export class CustomCanvas extends fabric.Canvas {
     if (this.labelProps.shape === "rounded_rect") {
       if (this.labelProps.split === "horizontal") {
         const segmentHeight = bb.height / splitParts;
-        ctx.roundRect(
-          bb.startX,
-          bb.startY,
-          bb.width,
-          segmentHeight,
-          roundRadius,
-        ); // First part
-        fold.points.forEach((y) =>
-          ctx.roundRect(bb.startX, y, bb.width, segmentHeight, roundRadius),
-        ); // Other parts
+        ctx.roundRect(bb.startX, bb.startY, bb.width, segmentHeight, roundRadius); // First part
+        fold.points.forEach((y) => ctx.roundRect(bb.startX, y, bb.width, segmentHeight, roundRadius)); // Other parts
       } else if (this.labelProps.split === "vertical") {
         const segmentWidth = bb.width / splitParts;
-        ctx.roundRect(
-          bb.startX,
-          bb.startY,
-          segmentWidth,
-          bb.height,
-          roundRadius,
-        ); // First part
-        fold.points.forEach((x) =>
-          ctx.roundRect(x, bb.startY, segmentWidth, bb.height, roundRadius),
-        ); // Other parts
+        ctx.roundRect(bb.startX, bb.startY, segmentWidth, bb.height, roundRadius); // First part
+        fold.points.forEach((x) => ctx.roundRect(x, bb.startY, segmentWidth, bb.height, roundRadius)); // Other parts
       } else {
         ctx.roundRect(0, 0, this.width, this.height, roundRadius);
       }
@@ -469,6 +474,29 @@ export class CustomCanvas extends fabric.Canvas {
     }
 
     ctx.fill();
+
+    // Visual grid overlay
+    if (this.gridEnabled && this.gridSize > 0) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(0, 0, 200, 0.15)";
+      ctx.lineWidth = 0.5;
+      ctx.setLineDash([]);
+      // Vertical lines
+      for (let x = bb.startX; x <= bb.endX; x += this.gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, bb.startY);
+        ctx.lineTo(x, bb.endY);
+        ctx.stroke();
+      }
+      // Horizontal lines
+      for (let y = bb.startY; y <= bb.endY; y += this.gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(bb.startX, y);
+        ctx.lineTo(bb.endX, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
 
     // Draw separator
 
@@ -494,10 +522,7 @@ export class CustomCanvas extends fabric.Canvas {
     ctx.restore();
   }
 
-  override _renderObjects(
-    ctx: CanvasRenderingContext2D,
-    objects: fabric.FabricObject[],
-  ) {
+  override _renderObjects(ctx: CanvasRenderingContext2D, objects: fabric.FabricObject[]) {
     super._renderObjects(ctx, objects);
 
     if (!this.highlightMirror || this.getActiveObjects().length > 1) {
@@ -511,12 +536,7 @@ export class CustomCanvas extends fabric.Canvas {
       infos.forEach((info) => {
         const bbox = obj.getBoundingRect();
         ctx.fillStyle = this.MIRROR_GHOST_COLOR;
-        ctx.fillRect(
-          info.pos.x - bbox.width / 2,
-          info.pos.y - bbox.height / 2,
-          bbox.width,
-          bbox.height,
-        );
+        ctx.fillRect(info.pos.x - bbox.width / 2, info.pos.y - bbox.height / 2, bbox.width, bbox.height);
         ctx.restore();
       });
     });
@@ -530,10 +550,7 @@ export class CustomCanvas extends fabric.Canvas {
     const fold = this.getFoldInfo();
     const result: MirrorInfo[] = [];
 
-    if (
-      fold.axis === "none" ||
-      !(this.labelProps.mirror === "flip" || this.labelProps.mirror === "copy")
-    ) {
+    if (fold.axis === "none" || !(this.labelProps.mirror === "flip" || this.labelProps.mirror === "copy")) {
       return result;
     }
 
@@ -546,10 +563,7 @@ export class CustomCanvas extends fabric.Canvas {
           pos.setX(x + (pos.x - bounds.startX));
           result.push({ pos, flip: false });
         });
-      } else if (
-        this.labelProps.mirror === "flip" &&
-        fold.points.length === 1
-      ) {
+      } else if (this.labelProps.mirror === "flip" && fold.points.length === 1) {
         // Half split only supported
         const axisX = fold.points[0];
         const pos = obj.getPointByOrigin("center", "center");
@@ -564,10 +578,7 @@ export class CustomCanvas extends fabric.Canvas {
           pos.setY(y + (pos.y - bounds.startY));
           result.push({ pos, flip: false });
         });
-      } else if (
-        this.labelProps.mirror === "flip" &&
-        fold.points.length === 1
-      ) {
+      } else if (this.labelProps.mirror === "flip" && fold.points.length === 1) {
         // Half split only supported
         const axisY = fold.points[0];
         const pos = obj.getPointByOrigin("center", "center");

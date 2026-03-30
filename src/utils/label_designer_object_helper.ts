@@ -3,6 +3,7 @@ import { OBJECT_DEFAULTS, OBJECT_DEFAULTS_TEXT, OBJECT_DEFAULTS_VECTOR, OBJECT_S
 import { ArUcoMarker } from "$/fabric-object/aruco";
 import Barcode from "$/fabric-object/barcode";
 import { QRCode } from "$/fabric-object/qrcode";
+import { Datamatrix } from "$/fabric-object/datamatrix";
 import type { OjectType } from "$/types";
 import { Toasts } from "$/utils/toasts";
 import { FileUtils } from "$/utils/file_utils";
@@ -29,7 +30,12 @@ export class LabelDesignerObjectHelper {
       return await this.addSvg(canvas, data);
     }
 
-    if (file.type === "image/png" || file.type === "image/jpeg" || file.type === "image/bmp" || file.type === "image/gif") {
+    if (
+      file.type === "image/png" ||
+      file.type === "image/jpeg" ||
+      file.type === "image/bmp" ||
+      file.type === "image/gif"
+    ) {
       const url = await FileUtils.blobToDataUrl(file);
       const fabricImg = await fabric.FabricImage.fromURL(url);
       fabricImg.set({ ...OBJECT_DEFAULTS });
@@ -166,6 +172,44 @@ export class LabelDesignerObjectHelper {
     return barcode;
   }
 
+  static addDatamatrix(canvas: fabric.Canvas): fabric.FabricObject {
+    const dm = new Datamatrix({
+      ...OBJECT_DEFAULTS,
+      ...OBJECT_SIZE_DEFAULTS,
+      text: "Hello",
+      cellSize: 4,
+    });
+    canvas.add(dm);
+    return dm;
+  }
+
+  static addReverseBox(canvas: fabric.Canvas): fabric.FabricObject {
+    const rect = new fabric.Rect({
+      ...OBJECT_DEFAULTS,
+      ...OBJECT_SIZE_DEFAULTS,
+      fill: "black",
+      stroke: "transparent",
+      strokeWidth: 0,
+      strokeUniform: true,
+    });
+    canvas.add(rect);
+    return rect;
+  }
+
+  static addBar(canvas: fabric.Canvas): fabric.FabricObject {
+    const rect = new fabric.Rect({
+      ...OBJECT_DEFAULTS,
+      width: OBJECT_SIZE_DEFAULTS.width,
+      height: Math.round(OBJECT_SIZE_DEFAULTS.height / 4),
+      fill: "black",
+      stroke: "transparent",
+      strokeWidth: 0,
+      strokeUniform: true,
+    });
+    canvas.add(rect);
+    return rect;
+  }
+
   static addObject(canvas: fabric.Canvas, objType: OjectType): fabric.FabricObject | undefined {
     switch (objType) {
       case "text":
@@ -185,6 +229,12 @@ export class LabelDesignerObjectHelper {
         return this.addArUco(canvas);
       case "barcode":
         return this.addBarcode(canvas);
+      case "datamatrix":
+        return this.addDatamatrix(canvas);
+      case "reverseBox":
+        return this.addReverseBox(canvas);
+      case "bar":
+        return this.addBar(canvas);
     }
   }
 }
