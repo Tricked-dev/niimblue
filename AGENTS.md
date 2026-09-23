@@ -6,7 +6,7 @@ Label designer web app (Svelte + fabric.js) for Niimbot thermal printers.
 
 - **Framework**: Svelte (not SvelteKit), TypeScript
 - **Canvas**: fabric.js for label design canvas
-- **Runtime/Package manager**: Bun (`bun run dev`, `bun add <x>`, `bun run <file.ts>`)
+- **Runtime/Package manager**: Bun (`bun run dev`, `bun add <x>`, `bun run <file.ts>`) do not use any npm commands
 - **Build**: Vite
 - **UI**: shadcn-svelte (Radix-based components via `$lib/components/ui/`). Use existing shadcn components before building custom ones. Add new ones with `bunx shadcn-svelte@latest add <component>`.
 
@@ -38,11 +38,11 @@ Import pattern: `import { Button } from "$lib/components/ui/button";`
 
 ## Common Entry Points
 
-| Task | Start here |
-|------|-----------|
-| Add/modify canvas objects | `src/fabric-object/` |
-| Image import/processing | `src/utils/image_process.ts`, `ImageImportModal.svelte` |
-| Object property controls | `GenericObjectParamsControls.svelte` |
-| Canvas behavior/grid | `src/fabric-object/custom_canvas.ts` |
-| Adding objects to canvas | `src/utils/label_designer_object_helper.ts` |
-| Main designer layout | `src/components/LabelDesigner.svelte` |
+| Task                      | Start here                                              |
+| ------------------------- | ------------------------------------------------------- |
+| Add/modify canvas objects | `src/fabric-object/`                                    |
+| Image import/processing   | `src/utils/image_process.ts`, `ImageImportModal.svelte` |
+| Object property controls  | `GenericObjectParamsControls.svelte`                    |
+| Canvas behavior/grid      | `src/fabric-object/custom_canvas.ts`                    |
+| Adding objects to canvas  | `src/utils/label_designer_object_helper.ts`             |
+| Main designer layout      | `src/components/LabelDesigner.svelte`                   |
