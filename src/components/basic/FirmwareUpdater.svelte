@@ -18,7 +18,7 @@
     const match = fwName.match(/(\d+\.\d+)/);
 
     // For modern firmware images version is stored in header
-    if (fwData.length >= 0x1C && fwData[0] === 0x18) {
+    if (fwData.length >= 0x1c && fwData[0] === 0x18) {
       const verNumber = (fwData[0x15] << 8) + fwData[0x14];
       fwVersion = (verNumber / 100).toFixed(2);
     } else if (match) {
@@ -67,29 +67,58 @@
 
 <div class="flex flex-col gap-1">
   <span class="text-xs text-zinc-400">Firmware flashing</span>
-  <div class="flex items-stretch mt-1">
+  <div class="flex items-stretch mt-1 fw-controls">
     {#if fwProgress}
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 rounded text-zinc-500 text-[11px]">Uploading {fwProgress}</span>
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 rounded text-zinc-500 text-[11px]"
+        >Uploading {fwProgress}</span>
     {:else}
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 rounded-l text-zinc-500 text-[11px] shrink-0">To</span>
+      <span
+        class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 rounded-l text-zinc-500 text-[11px] shrink-0"
+        >To</span>
       <button
-        class="inline-flex items-center px-2 h-7 bg-zinc-800 hover:bg-zinc-700 border-y border-zinc-700 text-zinc-300 text-xs transition-colors truncate max-w-[80px]"
+        class="inline-flex items-center px-2 h-7 bg-zinc-800 hover:bg-zinc-700 border-y border-zinc-700 text-zinc-300 text-xs transition-colors truncate max-w-[80px] fw-file"
         title={fwName}
         onclick={browseFw}
-        disabled={!!fwProgress}
-      >{fwName.length > 0 ? fwName.slice(0, 8) + "..." : "Browse..."}</button>
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0">ver.</span>
+        disabled={!!fwProgress}>{fwName.length > 0 ? fwName.slice(0, 8) + "..." : "Browse..."}</button>
+      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0"
+        >ver.</span>
       <input
-        class="w-14 bg-zinc-800 border border-zinc-700 px-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+        class="w-14 bg-zinc-800 border border-zinc-700 px-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 fw-version"
         placeholder="x.x"
         type="text"
-        bind:value={fwVersion}
-      />
+        bind:value={fwVersion} />
       <button
-        class="inline-flex items-center px-2 h-7 rounded-r bg-red-700 hover:bg-red-600 text-white text-xs transition-colors disabled:opacity-40"
+        class="inline-flex items-center px-2 h-7 rounded-r bg-red-700 hover:bg-red-600 text-white text-xs transition-colors disabled:opacity-40 fw-burn"
         onclick={upgradeFw}
-        disabled={!!fwProgress || !fwVersionValid || fwData === undefined}
-      >Burn</button>
+        disabled={!!fwProgress || !fwVersionValid || fwData === undefined}>Burn</button>
     {/if}
   </div>
 </div>
+
+<style>
+  @media (max-width: 640px) {
+    .fw-controls {
+      flex-wrap: wrap;
+      gap: 0.25rem;
+    }
+
+    .fw-controls > * {
+      border-left-width: 1px !important;
+      border-radius: 0.25rem;
+    }
+
+    .fw-file {
+      flex: 1 1 9rem;
+      max-width: none;
+    }
+
+    .fw-version {
+      flex: 0 1 4.5rem;
+      min-width: 4.5rem;
+    }
+
+    .fw-burn {
+      margin-left: auto;
+    }
+  }
+</style>

@@ -1,19 +1,36 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { derived } from "svelte/store";
-  import { appConfig, connectionState, printerClient, printerMeta, refreshRfidInfo } from "$/stores";
+  import {
+    appConfig,
+    automation,
+    connectionState,
+    initClient,
+    printerClient,
+    printerMeta,
+    refreshRfidInfo,
+  } from "$/stores";
   import { copyImageData, threshold, atkinson, invert, bayer } from "$/utils/post_process";
   import {
+    type AvailableTransports,
     type EncodedImage,
     ImageEncoder,
     LabelType,
+    NiimbotCapacitorBleClient,
     printTaskNames,
     type PrintProgressEvent,
     type PrintTaskName,
     AbstractPrintTask,
     Utils,
   } from "@mmote/niimbluelib";
-  import type { LabelProps, PostProcessType, FabricJson, PreviewProps, PreviewPropsOffset } from "$/types";
+  import type {
+    ConnectionType,
+    LabelProps,
+    PostProcessType,
+    FabricJson,
+    PreviewProps,
+    PreviewPropsOffset,
+  } from "$/types";
   import ParamLockButton from "$/components/basic/ParamLockButton.svelte";
   import { tr, type TranslationKey } from "$/utils/i18n";
   import { canvasPreprocess } from "$/utils/canvas_preprocess";
@@ -24,6 +41,7 @@
   import { CustomCanvas } from "$/fabric-object/custom_canvas";
   import { FileUtils } from "$/utils/file_utils";
   import AppModal from "$/components/basic/AppModal.svelte";
+  import * as Popover from "$/lib/components/ui/popover";
 
   interface Props {
     labelProps: LabelProps;
@@ -61,6 +79,7 @@
   let currentPrintTask: AbstractPrintTask | undefined;
 
   let savedProps = $state<PreviewProps>({});
+  let featureSupport = $state<AvailableTransports>({ webBluetooth: false, webSerial: false, capacitorBle: false });
 
   let modalRef: AppModal;
 
@@ -87,6 +106,32 @@
 
     printState = "idle";
     printProgress = 0;
+  };
+
+  const onConnectPrinter = async () => {
+    const connectionType = (LocalStoragePersistence.loadLastConnectionType() ?? "bluetooth") as ConnectionType;
+    await connectWithType(connectionType);
+  };
+
+  const hasAnyTransport = (): boolean =>
+    featureSupport.capacitorBle || featureSupport.webBluetooth || featureSupport.webSerial;
+
+  const connectWithType = async (connectionType: ConnectionType) => {
+    LocalStoragePersistence.saveLastConnectionType(connectionType);
+
+    initClient(connectionType);
+    connectionState.set("connecting");
+
+    try {
+      if ($printerClient instanceof NiimbotCapacitorBleClient && $automation?.autoConnectDeviceId !== undefined) {
+        await $printerClient.connect({ deviceId: $automation.autoConnectDeviceId });
+      } else {
+        await $printerClient.connect();
+      }
+    } catch (e) {
+      connectionState.set("disconnected");
+      Toasts.error(e);
+    }
   };
 
   const onPrintOnSystemPrinter = async () => {
@@ -325,6 +370,8 @@
   };
 
   onMount(async () => {
+    featureSupport = Utils.getAvailableTransports();
+
     if (csvEnabled) {
       const parseResult = csvParse(csvData);
       const spread: DSVRowArray<string> = Object.assign([], { columns: parseResult.columns });
@@ -373,235 +420,511 @@
 </script>
 
 <AppModal title={$tr("preview.title")} onClose={onModalClose} bind:show bind:this={modalRef}>
-  <div class="flex justify-center">
+  <div class="preview-stage">
     {#if pagesTotal > 1}
-      <button disabled={printState !== "idle"} class="inline-flex items-center justify-center w-full text-4xl text-zinc-400 hover:text-zinc-200" onclick={pageDown}>
+      <button
+        type="button"
+        disabled={printState !== "idle"}
+        class="preview-nav-button"
+        aria-label="Previous page"
+        onclick={pageDown}>
         <MdIcon icon="chevron_left" />
       </button>
     {/if}
 
-    <canvas class="print-start-{labelProps.printDirection}" bind:this={previewCanvas}></canvas>
+    <div class="preview-canvas-shell">
+      <canvas class="print-start-{labelProps.printDirection}" bind:this={previewCanvas}></canvas>
+    </div>
 
     {#if pagesTotal > 1}
-      <button disabled={printState !== "idle"} class="inline-flex items-center justify-center w-full text-4xl text-zinc-400 hover:text-zinc-200" onclick={pageUp}>
+      <button
+        type="button"
+        disabled={printState !== "idle"}
+        class="preview-nav-button"
+        aria-label="Next page"
+        onclick={pageUp}>
         <MdIcon icon="chevron_right" />
       </button>
     {/if}
   </div>
 
-  <div class="text-center text-xs text-zinc-300">
-    {#if pagesTotal > 1}<div>Page {page + 1} / {pagesTotal}</div>{/if}
+  <div class="preview-status text-xs text-zinc-300">
+    {#if pagesTotal > 1}<div class="text-zinc-400">Page {page + 1} / {pagesTotal}</div>{/if}
 
     {#if printState === "sending"}
       <div>Sending...</div>
     {/if}
     {#if printState === "printing"}
-      <div>
-        Printing...
+      <div class="w-full">
+        <div>Printing...</div>
         <div class="w-full bg-zinc-700 rounded-full h-4 mt-1 overflow-hidden" role="progressbar">
-          <div class="bg-blue-600 h-full text-center text-[10px] leading-4 text-white transition-none" style="width: {printProgress}%">{printProgress}%</div>
+          <div
+            class="bg-blue-600 h-full text-center text-[10px] leading-4 text-white transition-none"
+            style="width: {printProgress}%">
+            {printProgress}%
+          </div>
         </div>
       </div>
     {/if}
 
     {#if error}
-      <div class="bg-red-900/30 border border-red-700 rounded px-4 py-3 text-red-400 mt-2" role="alert">{error}</div>
+      <div class="bg-red-900/30 border border-red-700 rounded px-4 py-3 text-red-400 w-full" role="alert">{error}</div>
     {/if}
   </div>
 
   {#snippet footer()}
-    <div class="flex items-stretch">
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.postprocess")}</span>
+    <div class="preview-footer">
+      <div class="preview-controls-grid">
+        <div class="flex items-stretch">
+          <span
+            class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l"
+            >{$tr("preview.postprocess")}</span>
 
-      <select
-        class="bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1"
-        bind:value={postProcessType}
-        onchange={() => updateSavedProp("postProcess", postProcessType, true)}>
-        <option value="threshold">{$tr("preview.postprocess.threshold")}</option>
-        <option value="dither">{$tr("preview.postprocess.atkinson")}</option>
-        <option value="bayer">{$tr("preview.postprocess.bayer")}</option>
-      </select>
+          <select
+            class="bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1 min-w-0"
+            bind:value={postProcessType}
+            onchange={() => updateSavedProp("postProcess", postProcessType, true)}>
+            <option value="threshold">{$tr("preview.postprocess.threshold")}</option>
+            <option value="dither">{$tr("preview.postprocess.atkinson")}</option>
+            <option value="bayer">{$tr("preview.postprocess.bayer")}</option>
+          </select>
 
-      <ParamLockButton
-        propName="postProcess"
-        value={postProcessType}
-        savedValue={savedProps.postProcess}
-        onClick={toggleSavedProp} />
+          <ParamLockButton
+            propName="postProcess"
+            value={postProcessType}
+            savedValue={savedProps.postProcess}
+            onClick={toggleSavedProp} />
 
-      <button
-        class="inline-flex items-center gap-1 px-2 h-7 border border-l-0 border-zinc-700 text-xs transition-colors {postProcessInvert ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300' : 'text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
-        onclick={() => {
-          postProcessInvert = !postProcessInvert;
-          updatePreview();
-        }}>
-        <MdIcon icon="invert_colors" />
-      </button>
-    </div>
+          <button
+            type="button"
+            class="inline-flex items-center gap-1 px-2 h-7 border border-l-0 border-zinc-700 text-xs transition-colors {postProcessInvert
+              ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+              : 'text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
+            onclick={() => {
+              postProcessInvert = !postProcessInvert;
+              updatePreview();
+            }}>
+            <MdIcon icon="invert_colors" />
+          </button>
+        </div>
 
-    <div class="flex items-stretch">
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.threshold")}</span>
+        <div class="flex items-stretch">
+          <span
+            class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l"
+            >{$tr("preview.threshold")}</span>
 
-      <input
-        type="range"
-        id="threshold"
-        class="flex-1 h-7 px-4"
-        min="1"
-        max="255"
-        bind:value={thresholdValue}
-        onchange={() => updateSavedProp("threshold", thresholdValue, true)} />
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 border-l-0 text-zinc-500 text-[11px] shrink-0">{thresholdValue}</span>
+          <input
+            type="range"
+            id="threshold"
+            class="flex-1 h-7 px-4 min-w-0"
+            min="1"
+            max="255"
+            bind:value={thresholdValue}
+            onchange={() => updateSavedProp("threshold", thresholdValue, true)} />
+          <span
+            class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 border-l-0 text-zinc-500 text-[11px] shrink-0"
+            >{thresholdValue}</span>
 
-      <ParamLockButton
-        propName="threshold"
-        value={thresholdValue}
-        savedValue={savedProps.threshold}
-        onClick={toggleSavedProp} />
-    </div>
+          <ParamLockButton
+            propName="threshold"
+            value={thresholdValue}
+            savedValue={savedProps.threshold}
+            onClick={toggleSavedProp} />
+        </div>
 
-    <div class="flex items-stretch flex-nowrap">
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.copies")}</span>
-      <input
-        class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
-        type="number"
-        min="1"
-        bind:value={quantity}
-        onchange={() => updateSavedProp("quantity", quantity)} />
-      <ParamLockButton
-        propName="quantity"
-        value={quantity}
-        savedValue={savedProps.quantity}
-        onClick={toggleSavedProp} />
-    </div>
+        <div class="flex items-stretch flex-nowrap">
+          <span
+            class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l"
+            >{$tr("preview.copies")}</span>
+          <input
+            class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+            type="number"
+            min="1"
+            bind:value={quantity}
+            onchange={() => updateSavedProp("quantity", quantity)} />
+          <ParamLockButton
+            propName="quantity"
+            value={quantity}
+            savedValue={savedProps.quantity}
+            onClick={toggleSavedProp} />
+        </div>
 
-    <div class="flex items-stretch flex-nowrap">
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.density")}</span>
-      <input
-        class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
-        type="number"
-        min={$printerMeta?.densityMin ?? 1}
-        max={$printerMeta?.densityMax ?? 20}
-        bind:value={density}
-        onchange={() => updateSavedProp("density", density)} />
-      <ParamLockButton propName="density" value={density} savedValue={savedProps.density} onClick={toggleSavedProp} />
-    </div>
+        <div class="flex items-stretch flex-nowrap">
+          <span
+            class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l"
+            >{$tr("preview.density")}</span>
+          <input
+            class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
+            type="number"
+            min={$printerMeta?.densityMin ?? 1}
+            max={$printerMeta?.densityMax ?? 20}
+            bind:value={density}
+            onchange={() => updateSavedProp("density", density)} />
+          <ParamLockButton
+            propName="density"
+            value={density}
+            savedValue={savedProps.density}
+            onClick={toggleSavedProp} />
+        </div>
 
-    {#if printTaskName === "D110M_V4"}
-      <div class="flex items-stretch flex-nowrap">
-        <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.speed")}</span>
-        <select class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1" bind:value={speed} onchange={() => updateSavedProp("speed", speed, true)}>
-          <option value={0}>{$tr("preview.speed.0")}</option>
-          <option value={1}>{$tr("preview.speed.1")}</option>
-        </select>
+        {#if printTaskName === "D110M_V4"}
+          <div class="flex items-stretch flex-nowrap">
+            <span
+              class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l"
+              >{$tr("preview.speed")}</span>
+            <select
+              class="bg-zinc-800 border border-zinc-700 rounded-r border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1"
+              bind:value={speed}
+              onchange={() => updateSavedProp("speed", speed, true)}>
+              <option value={0}>{$tr("preview.speed.0")}</option>
+              <option value={1}>{$tr("preview.speed.1")}</option>
+            </select>
 
-        <ParamLockButton propName="speed" value={speed} savedValue={savedProps.speed} onClick={toggleSavedProp} />
-      </div>
-    {/if}
+            <ParamLockButton propName="speed" value={speed} savedValue={savedProps.speed} onClick={toggleSavedProp} />
+          </div>
+        {/if}
 
-    <div class="flex items-stretch">
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.label_type")}</span>
-      <select class="bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1" bind:value={labelType} onchange={() => updateSavedProp("labelType", labelType)}>
-        {#each Object.values(LabelType) as lt (lt)}
-          {#if typeof lt !== "string"}
-            <option value={lt}>
-              {#if $printerMeta?.paperTypes.includes(lt)}✔{/if}
-              {$tr(labelTypeTranslationKey(LabelType[lt]))}
-            </option>
+        <div class="flex items-stretch">
+          <span
+            class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l"
+            >{$tr("preview.label_type")}</span>
+          <select
+            class="bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1 min-w-0"
+            bind:value={labelType}
+            onchange={() => updateSavedProp("labelType", labelType)}>
+            {#each Object.values(LabelType) as lt (lt)}
+              {#if typeof lt !== "string"}
+                <option value={lt}>
+                  {#if $printerMeta?.paperTypes.includes(lt)}✔{/if}
+                  {$tr(labelTypeTranslationKey(LabelType[lt]))}
+                </option>
+              {/if}
+            {/each}
+          </select>
+
+          <ParamLockButton
+            propName="labelType"
+            value={labelType}
+            savedValue={savedProps.labelType}
+            onClick={toggleSavedProp} />
+        </div>
+
+        <div class="flex items-stretch">
+          <span
+            class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l"
+            >{$tr("preview.print_task")}</span>
+          <select
+            class="bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1 min-w-0"
+            bind:value={printTaskName}
+            onchange={() => updateSavedProp("printTaskName", printTaskName)}>
+            {#each printTaskNames as name (name)}
+              <option value={name}>
+                {#if detectedPrintTaskName === name}✔{/if}
+                {name}
+              </option>
+            {/each}
+          </select>
+
+          <ParamLockButton
+            propName="printTaskName"
+            value={printTaskName}
+            savedValue={savedProps.printTaskName}
+            onClick={toggleSavedProp} />
+        </div>
+
+        <div class="flex items-stretch col-span-full preview-offset-row">
+          <span
+            class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l"
+            >{$tr("preview.offset")}</span>
+          {#if offsetWarning}
+            <span
+              class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 border-l-0 text-yellow-400 text-[11px] shrink-0"
+              title={offsetWarning}><MdIcon icon="warning" /></span>
           {/if}
-        {/each}
-      </select>
+          <div class="preview-offset-field">
+            <span
+              class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0"
+              ><MdIcon icon="unfold_more" class="r-90" /></span>
+            <input
+              class="flex-1 bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 min-w-[4rem]"
+              type="number"
+              bind:value={offset.x}
+              onchange={() => updateSavedProp("offset", offset, true)} />
+          </div>
+          <div class="preview-offset-field">
+            <span
+              class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0"
+              ><MdIcon icon="unfold_more" /></span>
+            <input
+              class="flex-1 bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 min-w-[4rem]"
+              type="number"
+              bind:value={offset.y}
+              onchange={() => updateSavedProp("offset", offset, true)} />
+          </div>
+          <select
+            class="bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 min-w-[6rem]"
+            bind:value={offset.offsetType}
+            onchange={() => updateSavedProp("offset", offset, true)}>
+            <option value="inner">{$tr("preview.offset.inner")}</option>
+            <option value="outer">{$tr("preview.offset.outer")}</option>
+          </select>
 
-      <ParamLockButton
-        propName="labelType"
-        value={labelType}
-        savedValue={savedProps.labelType}
-        onClick={toggleSavedProp} />
+          <ParamLockButton propName="offset" value={offset} savedValue={savedProps.offset} onClick={toggleSavedProp} />
+        </div>
+      </div>
+
+      <div class="preview-actions">
+        <button
+          type="button"
+          class="inline-flex items-center justify-center gap-1 px-2.5 h-8 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors"
+          onclick={() => modalRef.hide()}>
+          {$tr("preview.close")}
+        </button>
+
+        {#if printState !== "idle"}
+          <button
+            type="button"
+            class="inline-flex items-center justify-center gap-1 px-2.5 h-8 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+            disabled={$disconnected}
+            onclick={endPrint}>
+            {$tr("preview.print.cancel")}
+          </button>
+        {/if}
+
+        <button
+          type="button"
+          class="inline-flex items-center justify-center gap-1 px-2.5 h-8 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors"
+          title={$tr("preview.print.system")}
+          onclick={onPrintOnSystemPrinter}>
+          <MdIcon icon="print" />
+        </button>
+
+        {#if $disconnected}
+          <div class="preview-connect-desktop">
+            <Popover.Root>
+              <Popover.Trigger
+                class="inline-flex items-center justify-center gap-1 px-2.5 h-8 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition-colors whitespace-nowrap w-full disabled:opacity-50"
+                disabled={$connectionState === "connecting"}
+                title="Connect printer">
+                <MdIcon icon={$connectionState === "connecting" ? "hourglass_top" : "bluetooth_searching"} />
+                {$connectionState === "connecting" ? "Connecting..." : "Connect"}
+                {#if $connectionState !== "connecting"}<MdIcon icon="expand_more" />{/if}
+              </Popover.Trigger>
+
+              <Popover.Content side="top" align="end" portalProps={{ disabled: true }} class="w-48 p-1">
+                {#if featureSupport.webBluetooth}
+                  <button type="button" class="preview-connect-option" onclick={() => connectWithType("bluetooth")}>
+                    <MdIcon icon="bluetooth" />
+                    {$tr("connector.bluetooth")}
+                  </button>
+                {/if}
+                {#if featureSupport.webSerial}
+                  <button type="button" class="preview-connect-option" onclick={() => connectWithType("serial")}>
+                    <MdIcon icon="usb" />
+                    {$tr("connector.serial")}
+                  </button>
+                {/if}
+                {#if featureSupport.capacitorBle}
+                  <button type="button" class="preview-connect-option" onclick={() => connectWithType("capacitor-ble")}>
+                    <MdIcon icon="usb" /> Capacitor BLE
+                  </button>
+                {/if}
+                {#if !hasAnyTransport()}
+                  <div class="px-2 py-1.5 text-[11px] text-zinc-400">No supported connection methods</div>
+                {/if}
+              </Popover.Content>
+            </Popover.Root>
+          </div>
+
+          <button
+            type="button"
+            class="preview-connect-mobile inline-flex items-center justify-center gap-1 px-2.5 h-8 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition-colors whitespace-nowrap"
+            disabled={$connectionState === "connecting" || !hasAnyTransport()}
+            title="Connect printer"
+            onclick={onConnectPrinter}>
+            <MdIcon icon={$connectionState === "connecting" ? "hourglass_top" : "bluetooth_searching"} />
+            {$connectionState === "connecting" ? "Connecting..." : "Connect"}
+          </button>
+        {/if}
+
+        <button
+          type="button"
+          class="inline-flex items-center justify-center gap-1 px-2.5 h-8 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors whitespace-nowrap"
+          disabled={$disconnected || printState !== "idle"}
+          onclick={onPrint}>
+          {#if $disconnected}
+            {$tr("preview.not_connected")}
+          {:else}
+            <MdIcon icon="print" /> {$tr("preview.print")}
+          {/if}
+        </button>
+      </div>
     </div>
-
-    <div class="flex items-stretch">
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.print_task")}</span>
-      <select
-        class="bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 flex-1"
-        bind:value={printTaskName}
-        onchange={() => updateSavedProp("printTaskName", printTaskName)}>
-        {#each printTaskNames as name (name)}
-          <option value={name}>
-            {#if detectedPrintTaskName === name}✔{/if}
-            {name}
-          </option>
-        {/each}
-      </select>
-
-      <ParamLockButton
-        propName="printTaskName"
-        value={printTaskName}
-        savedValue={savedProps.printTaskName}
-        onClick={toggleSavedProp} />
-    </div>
-
-    <div class="flex items-stretch">
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.offset")}</span>
-      {#if offsetWarning}
-        <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 border-l-0 text-yellow-400 text-[11px] shrink-0" title={offsetWarning}><MdIcon icon="warning" /></span>
-      {/if}
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 border-l-0 text-zinc-500 text-[11px] shrink-0"><MdIcon icon="unfold_more" class="r-90" /></span>
-      <input
-        class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
-        type="number"
-        bind:value={offset.x}
-        onchange={() => updateSavedProp("offset", offset, true)} />
-      <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 border-l-0 text-zinc-500 text-[11px] shrink-0"><MdIcon icon="unfold_more" /></span>
-      <input
-        class="w-full bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500"
-        type="number"
-        bind:value={offset.y}
-        onchange={() => updateSavedProp("offset", offset, true)} />
-      <select
-        class="bg-zinc-800 border border-zinc-700 border-l-0 px-2 h-7 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
-        bind:value={offset.offsetType}
-        onchange={() => updateSavedProp("offset", offset, true)}>
-        <option value="inner">{$tr("preview.offset.inner")}</option>
-        <option value="outer">{$tr("preview.offset.outer")}</option>
-      </select>
-
-      <ParamLockButton propName="offset" value={offset} savedValue={savedProps.offset} onClick={toggleSavedProp} />
-    </div>
-
-    <button type="button" class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors">{$tr("preview.close")}</button>
-
-    {#if printState !== "idle"}
-      <button type="button" class="inline-flex items-center gap-1 px-2.5 h-7 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors" disabled={$disconnected} onclick={endPrint}>
-        {$tr("preview.print.cancel")}
-      </button>
-    {/if}
-
-    <button
-      type="button"
-      class="inline-flex items-center gap-1 px-2 h-7 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-xs transition-colors"
-      title={$tr("preview.print.system")}
-      onclick={onPrintOnSystemPrinter}>
-      <MdIcon icon="print" />
-    </button>
-
-    <button type="button" class="inline-flex items-center gap-1 px-2.5 h-7 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors whitespace-nowrap" disabled={$disconnected || printState !== "idle"} onclick={onPrint}>
-      {#if $disconnected}
-        {$tr("preview.not_connected")}
-      {:else}
-        <MdIcon icon="print" /> {$tr("preview.print")}
-      {/if}
-    </button>
   {/snippet}
 </AppModal>
 
 <style>
+  .preview-stage {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .preview-canvas-shell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 10rem;
+    max-height: min(55vh, 26rem);
+    overflow: auto;
+    border-radius: 0.5rem;
+    border: 1px solid #3f3f46;
+    background:
+      linear-gradient(45deg, #191919 25%, transparent 25%), linear-gradient(-45deg, #191919 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #191919 75%), linear-gradient(-45deg, transparent 75%, #191919 75%);
+    background-size: 20px 20px;
+    background-position:
+      0 0,
+      0 10px,
+      10px -10px,
+      -10px 0;
+    padding: 0.75rem;
+  }
+
+  .preview-nav-button {
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #a1a1aa;
+    border: 1px solid #3f3f46;
+    border-radius: 0.5rem;
+    transition: color 120ms ease;
+  }
+
+  .preview-nav-button:hover:not(:disabled) {
+    color: #f4f4f5;
+  }
+
+  .preview-nav-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .preview-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .preview-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .preview-controls-grid {
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .preview-actions {
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+    width: 100%;
+  }
+
+  .preview-offset-field {
+    display: flex;
+    flex: 1 1 8rem;
+    min-width: 8rem;
+  }
+
+  .preview-connect-desktop {
+    display: inline-flex;
+  }
+
+  .preview-connect-mobile {
+    display: none;
+  }
+
+  .preview-connect-option {
+    height: 1.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0 0.5rem;
+    border-radius: 0.35rem;
+    color: #d4d4d8;
+    font-size: 0.74rem;
+    transition: background-color 120ms ease;
+  }
+
+  .preview-connect-option:hover {
+    background: #3f3f46;
+  }
+
   canvas {
     image-rendering: pixelated;
     border: 1px solid #6d6d6d;
     max-width: 100%;
+    height: auto;
   }
+
   canvas.print-start-left {
     border-left: 2px solid #ff4646;
   }
+
   canvas.print-start-top {
     border-top: 2px solid #ff4646;
+  }
+
+  @media (max-width: 900px) {
+    .preview-controls-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .preview-actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .preview-connect-desktop {
+      display: none;
+    }
+
+    .preview-connect-mobile {
+      display: inline-flex;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .preview-stage {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    .preview-nav-button {
+      width: 100%;
+      height: 2.25rem;
+    }
+
+    .preview-offset-row {
+      flex-wrap: wrap;
+      overflow-x: visible;
+      row-gap: 0.5rem;
+    }
+
+    .preview-actions {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 </style>

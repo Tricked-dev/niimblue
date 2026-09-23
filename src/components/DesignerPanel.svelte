@@ -323,7 +323,10 @@
           <hr class="border-zinc-700 my-3" />
           <button
             class="w-full inline-flex items-center justify-center gap-1.5 h-9 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm transition-colors"
-            onclick={(e) => { e.stopPropagation(); onLabelSettingsOpen?.(); }}>
+            onclick={(e) => {
+              e.stopPropagation();
+              onLabelSettingsOpen?.();
+            }}>
             <MdIcon icon="settings" />
             Label Settings
           </button>
@@ -391,7 +394,7 @@
               Print
             </button>
           </div>
-          <PrinterConnector />
+          <PrinterConnector inlineSettings={true} />
         {:else if activeTab === "language"}
           <div class="flex flex-col gap-3">
             <div class="text-xs text-zinc-400">Select language</div>
