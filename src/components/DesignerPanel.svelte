@@ -142,7 +142,7 @@
                 {selectedObject}
                 {editRevision}
                 valueUpdated={onValueUpdated} />{/if}
-            {#if hasVar}<VariableInsertControl {selectedObject} valueUpdated={onValueUpdated} />{/if}
+            {#if hasVar && selectedObject}<VariableInsertControl {selectedObject} valueUpdated={onValueUpdated} />{/if}
           </div>
         </section>
       {/if}
@@ -267,7 +267,7 @@
   <!-- Mobile sheet -->
   <div
     class="bg-zinc-900 border-t border-zinc-800 transition-[height] duration-200"
-    style="height: {sheetExpanded ? '50vh' : '36px'}; overflow: hidden; padding-bottom: env(safe-area-inset-bottom);">
+    style="height: {sheetExpanded ? '50dvh' : '36px'}; overflow: hidden; padding-bottom: env(safe-area-inset-bottom);">
     <!-- Handle + tabs row -->
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div
@@ -304,7 +304,7 @@
 
     <!-- Tab content -->
     {#if sheetExpanded}
-      <div class="overflow-y-auto p-3" style="height: calc(50vh - 36px)">
+      <div class="overflow-y-auto p-3" style="height: calc(50dvh - 36px - env(safe-area-inset-bottom))">
         {#if activeTab === "add"}
           <div class="grid grid-cols-4 gap-1 px-1">
             {#each toolButtons as { type, icon, title } (type)}
@@ -367,7 +367,7 @@
                   {selectedObject}
                   {editRevision}
                   valueUpdated={onValueUpdated} />{/if}
-              {#if hasVar}<VariableInsertControl {selectedObject} valueUpdated={onValueUpdated} />{/if}
+              {#if hasVar && selectedObject}<VariableInsertControl {selectedObject} valueUpdated={onValueUpdated} />{/if}
             </div>
           {:else}
             <p class="text-xs text-zinc-500">Select an object to edit its properties</p>

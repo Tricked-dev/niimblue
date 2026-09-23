@@ -221,7 +221,7 @@
     if (labelSettingsOpen) closeLabelSettings();
   }} />
 
-<div class="flex flex-col h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100">
+<div class="fixed inset-0 flex flex-col h-[100dvh] w-full overflow-hidden bg-zinc-950 text-zinc-100">
   <DesignerTopBar {undoState} {onUndo} {onRedo} {onClear} {onPreview} {onPrint} {onSave} {onOpen} />
 
   <div class="flex flex-1 overflow-hidden min-h-0">
@@ -357,8 +357,8 @@
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div class="fixed inset-0 z-50 flex items-center justify-center" onclick={closeLabelSettings}>
     <div
-      class="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl flex flex-col max-sm:h-[80vh] max-sm:w-[95vw] max-sm:max-w-[95vw]"
-      style="max-height:90vh; width:min(95vw,480px); {labelSettingsPos
+      class="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl flex flex-col max-sm:h-[80dvh] max-sm:w-[95vw] max-sm:max-w-[95vw]"
+      style="max-height:90dvh; width:min(95vw,480px); {labelSettingsPos
         ? `position:fixed;left:${Math.min(labelSettingsPos.x, window.innerWidth - 500)}px;top:${Math.min(labelSettingsPos.y, window.innerHeight - 400)}px;`
         : ''}"
       onclick={(e) => e.stopPropagation()}

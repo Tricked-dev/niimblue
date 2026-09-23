@@ -16,6 +16,7 @@
   const onImportClicked = async () => {
     const files = await FileUtils.pickFileAsync("pdf", false);
     const file = files[0];
+    if (!file) return;
     importState = "processing";
 
     try {
@@ -23,7 +24,7 @@
       const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
       pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/legacy/build/pdf.worker.mjs", import.meta.url).href;
 
-      const loadingTask = pdfjsLib.getDocument(url);
+      const loadingTask = pdfjsLib.getDocument({ url });
       const pdfDoc = await loadingTask.promise;
       const page = await pdfDoc.getPage(1);
 

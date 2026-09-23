@@ -441,7 +441,7 @@
         };
         obj.set({ ...snapped, scaleX: 1, scaleY: 1 });
         obj.setCoords();
-        fabricCanvas.requestRenderAll();
+        fabricCanvas!.requestRenderAll();
       }
       undo.push(fabricCanvas!, labelProps);
     });

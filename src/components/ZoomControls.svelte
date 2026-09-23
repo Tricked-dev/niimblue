@@ -19,8 +19,9 @@
 
   <button
     class="h-7 px-2 flex items-center justify-center rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-400 text-[10px] min-w-[46px]"
-    title="Zoom level"
-    aria-label="Zoom level"
+    onclick={() => canvas?.resetVirtualZoom()}
+    title="Reset zoom to 100%"
+    aria-label="Reset zoom to 100%"
   >{Math.round(zoom * 100)}%</button>
 
   <button

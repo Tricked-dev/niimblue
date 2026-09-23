@@ -180,7 +180,7 @@
     ><MdIcon icon="align_horizontal_left" /></button>
   <button class="{b} {bn}" onclick={moveToRightEdge} title="Move to right edge"
     ><MdIcon icon="align_horizontal_right" /></button>
-  <ObjectPositionControls {selectedObject} />
+  <ObjectPositionControls {selectedObject} {valueUpdated} />
 </div>
 
 <!-- Row 2: layer order -->

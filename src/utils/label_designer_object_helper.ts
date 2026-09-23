@@ -168,7 +168,7 @@ export class LabelDesignerObjectHelper {
 
       const currentScale = fabricImg.scaleX ?? 1;
       const currentWidth = Math.round((fabricImg.width ?? 0) * currentScale);
-      const currentHeight = Math.round((fabricImg.height ?? 0) * currentScale);
+      const currentHeight = Math.round((fabricImg.height ?? 0) * (fabricImg.scaleY ?? 1));
 
       if (currentWidth < 1 || currentHeight < 1) return;
 

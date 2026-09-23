@@ -22,6 +22,16 @@
 
   const isEditor = $derived(currentHash === "#/editor");
 
+  $effect(() => {
+    document.documentElement.classList.toggle("niim-editor-active", isEditor);
+    document.body.classList.toggle("niim-editor-active", isEditor);
+    if (isEditor) window.scrollTo(0, 0);
+    return () => {
+      document.documentElement.classList.remove("niim-editor-active");
+      document.body.classList.remove("niim-editor-active");
+    };
+  });
+
   const onHashChange = () => {
     currentHash = window.location.hash;
   };

@@ -174,3 +174,8 @@
 		display: none;
   }
 }
+html.niim-editor-active,
+body.niim-editor-active {
+  overflow: hidden;
+  overscroll-behavior: none;
+}

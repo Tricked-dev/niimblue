@@ -10,7 +10,7 @@
     printerMeta,
     refreshRfidInfo,
   } from "$/stores";
-  import { copyImageData, threshold, atkinson, invert, bayer } from "$/utils/post_process";
+  import * as effects from "$/utils/post_process";
   import {
     type AvailableTransports,
     type EncodedImage,
@@ -62,7 +62,10 @@
   let quantity = $state<number>(1);
   let postProcessType = $state<PostProcessType>();
   let postProcessInvert = $state<boolean>(false);
+  let postProcessMirror = $state<boolean>(false);
   let thresholdValue = $state<number>(140);
+  let strengthValue = $state<number>(1);
+  let serpentineValue = $state<boolean>(true);
   let originalImage: ImageData;
   let previewContext: CanvasRenderingContext2D;
   let printTaskName = $state<PrintTaskName>("B1");
@@ -216,18 +219,32 @@
   };
 
   const updatePreview = () => {
-    let iData: ImageData = copyImageData(originalImage);
+    let iData: ImageData = effects.copyImageData(originalImage);
 
     if (postProcessType === "threshold") {
-      iData = threshold(iData, thresholdValue);
+      iData = effects.threshold(iData, thresholdValue);
     } else if (postProcessType === "dither") {
-      iData = atkinson(iData, thresholdValue);
-    } else if (postProcessType === "bayer") {
-      iData = bayer(iData, thresholdValue);
+      iData = effects.atkinson(iData, { threshold: thresholdValue, strength: strengthValue, serpentine: serpentineValue });
+    } else if (postProcessType === "bayer2") {
+      iData = effects.bayer(iData, 2);
+    } else if (postProcessType === "bayer4") {
+      iData = effects.bayer(iData, 4);
+    } else if (postProcessType === "bayer" || postProcessType === "bayer8") {
+      iData = effects.bayer(iData, 8);
+    } else if (postProcessType === "floyd_steinberg") {
+      iData = effects.floydSteinberg(iData, { threshold: thresholdValue, strength: strengthValue, serpentine: serpentineValue });
+    } else if (postProcessType === "jjn") {
+      iData = effects.jarvisJudiceNinke(iData, { threshold: thresholdValue, strength: strengthValue, serpentine: serpentineValue });
+    } else if (postProcessType === "stucki") {
+      iData = effects.stucki(iData, { threshold: thresholdValue, strength: strengthValue, serpentine: serpentineValue });
     }
 
     if (postProcessInvert) {
-      iData = invert(iData);
+      iData = effects.invert(iData);
+    }
+
+    if (postProcessMirror) {
+      iData = effects.mirror(iData);
     }
 
     offsetWarning = "";
@@ -290,9 +307,11 @@
         return;
       }
       savedProps = saved;
-      if (saved.postProcess !== undefined) postProcessType = saved.postProcess;
+      if (saved.postProcess !== undefined) postProcessType = saved.postProcess === "bayer" ? "bayer8" : saved.postProcess;
       if (saved.postProcessInvert !== undefined) postProcessInvert = saved.postProcessInvert;
       if (saved.threshold !== undefined) thresholdValue = saved.threshold;
+      if (saved.strength !== undefined) strengthValue = saved.strength;
+      if (saved.serpentine !== undefined) serpentineValue = saved.serpentine;
       if (saved.quantity !== undefined) quantity = saved.quantity;
       if (saved.density !== undefined) density = saved.density;
       if (saved.speed !== undefined) speed = saved.speed;
@@ -486,7 +505,12 @@
             onchange={() => updateSavedProp("postProcess", postProcessType, true)}>
             <option value="threshold">{$tr("preview.postprocess.threshold")}</option>
             <option value="dither">{$tr("preview.postprocess.atkinson")}</option>
-            <option value="bayer">{$tr("preview.postprocess.bayer")}</option>
+            <option value="bayer2">{$tr("preview.postprocess.bayer")} 2×2</option>
+            <option value="bayer4">{$tr("preview.postprocess.bayer")} 4×4</option>
+            <option value="bayer8">{$tr("preview.postprocess.bayer")} 8×8</option>
+            <option value="floyd_steinberg">{$tr("preview.postprocess.floyd_steinberg")}</option>
+            <option value="jjn">{$tr("preview.postprocess.jjn")}</option>
+            <option value="stucki">{$tr("preview.postprocess.stucki")}</option>
           </select>
 
           <ParamLockButton
@@ -506,8 +530,23 @@
             }}>
             <MdIcon icon="invert_colors" />
           </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-1 px-2 h-7 border border-l-0 border-zinc-700 text-xs transition-colors {postProcessMirror
+              ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+              : 'text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
+            title="Mirror"
+            aria-label="Mirror print"
+            aria-pressed={postProcessMirror}
+            onclick={() => {
+              postProcessMirror = !postProcessMirror;
+              updatePreview();
+            }}>
+            <MdIcon icon="flip" />
+          </button>
         </div>
 
+        {#if !["bayer2", "bayer4", "bayer8", "bayer"].includes(postProcessType ?? "")}
         <div class="flex items-stretch">
           <span
             class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l"
@@ -531,6 +570,37 @@
             savedValue={savedProps.threshold}
             onClick={toggleSavedProp} />
         </div>
+        {/if}
+
+        {#if ["dither", "floyd_steinberg", "jjn", "stucki"].includes(postProcessType ?? "")}
+          <div class="flex items-stretch">
+            <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 text-zinc-500 text-[11px] shrink-0 rounded-l">{$tr("preview.strength")}</span>
+            <input
+              type="range"
+              class="flex-1 h-7 px-4 min-w-0"
+              min="0"
+              max="1.5"
+              step="0.1"
+              bind:value={strengthValue}
+              onchange={() => updateSavedProp("strength", strengthValue, true)} />
+            <span class="inline-flex items-center px-2 bg-zinc-900 border border-zinc-700 border-l-0 text-zinc-500 text-[11px] shrink-0">{strengthValue.toFixed(1)}</span>
+            <ParamLockButton propName="strength" value={strengthValue} savedValue={savedProps.strength} onClick={toggleSavedProp} />
+            <button
+              type="button"
+              class="inline-flex items-center px-2 h-7 border border-l-0 border-zinc-700 text-xs transition-colors {serpentineValue
+                ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+                : 'text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}"
+              title={$tr("preview.serpentine")}
+              aria-label={$tr("preview.serpentine")}
+              aria-pressed={serpentineValue}
+              onclick={() => {
+                serpentineValue = !serpentineValue;
+                updateSavedProp("serpentine", serpentineValue, true);
+              }}>
+              <MdIcon icon="swap_vert" />
+            </button>
+          </div>
+        {/if}
 
         <div class="flex items-stretch flex-nowrap">
           <span
